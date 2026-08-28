@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>NOKK 라이브</title>
+<style>
+  :root{--bg:#0f1115;--card:#1a1d24;--fg:#e8eaed;--dim:#9aa0a8;--acc:#4ea1ff;--ok:#3ddc84;--off:#5a5f68;--warn:#ffb020;--fire:#ff5c5c;}
+  @media(prefers-color-scheme:light){:root{--bg:#f2f3f5;--card:#fff;--fg:#1a1d24;--dim:#666;--acc:#1a73e8;--off:#bbb;}}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:12px;max-width:640px;margin:0 auto}
+  h1{font-size:18px;margin:4px 0 12px;display:flex;align-items:center;gap:8px}
+  .dot{width:11px;height:11px;border-radius:50%;background:var(--off);display:inline-block;transition:.3s}
+  .dot.on{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+  .card{background:var(--card);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  button{font-size:16px;font-weight:600;border:0;border-radius:12px;padding:14px;width:100%;background:var(--acc);color:#fff;cursor:pointer}
+  button.sec{background:transparent;color:var(--acc);border:1.5px solid var(--acc)}
+  button:active{opacity:.7}
+  button:disabled{opacity:.4;cursor:default}
+  .btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  .big{font-size:34px;font-weight:800;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+  .lbl{font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
+  .bar{height:12px;border-radius:6px;background:#0006;overflow:hidden;margin-top:8px}
+  @media(prefers-color-scheme:light){.bar{background:#e0e0e0}}
+  .bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--ok));transition:width .3s}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center}
+  .mini{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+  .vib{display:flex;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid #fff1;font-variant-numeric:tabular-nums}
+  .vib:last-child{border:0}
+  .vib .ax{font-weight:700}
+  .tag{font-size:11px;padding:2px 7px;border-radius:20px;background:#fff2;color:var(--dim)}
+  .fire{color:var(--fire)} .horn{color:var(--warn)} .siren{color:var(--acc)} .loud{color:var(--ok)}
+  .meta{font-size:12px;color:var(--dim);margin-top:4px;font-variant-numeric:tabular-nums}
+  .muted{color:var(--dim);font-size:13px;text-align:center;padding:10px 0}
+  code{background:#fff1;padding:1px 5px;border-radius:4px;font-size:12px}
+</style>
+</head>
+<body>
+<h1><span id="live" class="dot"></span> NOKK 라이브 수신</h1>
+
+<div class="card">
+  <button id="btnConn">🔗 연결</button>
+  <div class="btns">
+    <button id="btnExport" class="sec" disabled>⬇ 내보내기</button>
+    <button id="btnWake" class="sec">☀ 화면 켜두기</button>
+  </div>
+  <div id="connMsg" class="muted">연결 안 됨 · 안드로이드 크롬 필요(iOS는 Bluefy 앱)</div>
+</div>
+
+<div class="card">
+  <div class="lbl">진행률 (받은 / 총 생성)</div>
+  <div class="row"><span class="big" id="pct">–</span><span class="meta" id="cnt">0 / 0</span></div>
+  <div class="bar"><i id="barFill"></i></div>
+  <div class="meta" id="gapMsg"></div>
+</div>
+
+<div class="card">
+  <div class="grid3">
+    <div><div class="lbl">작동중</div><div class="mini" id="opState">–</div></div>
+    <div><div class="lbl">마지막 살아난</div><div class="mini" id="aliveAt">–</div></div>
+    <div><div class="lbl">부팅#</div><div class="mini" id="bootNo">–</div></div>
+  </div>
+  <div class="meta" id="liveNow"></div>
+</div>
+
+<div class="card">
+  <div class="lbl">최근 진동 3</div>
+  <div id="vibList"><div class="muted">아직 없음</div></div>
+</div>
+
+<script>
+"use strict";
+// ── NUS UUID (v3.9.3 펌웨어와 일치) ──
+const SVC="6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+const TX ="6e400003-b5a3-f393-e0a9-e50e24dcca9e"; // notify 본체→폰
+const RX ="6e400002-b5a3-f393-e0a9-e50e24dcca9e"; // write  폰→본체
+
+let dev=null, rxChar=null, wantConn=false, wakeLock=null;
+let head=0, boot=null, maxSeq=0, recvCount=0;
+const seen=new Set();          // 받은 seq(결번 감지·중복 제거)
+const rawLines=[];             // 전량 저장(내보내기)
+const recentVibs=[];           // 최근 발동
+let lastRxAt=0;                // 마지막 수신시각(작동중 판정)
+let rxBuf="";                  // '\n' 재조립 버퍼
+let bad=0;                     // 디코딩 실패 카운트
+
+const $=id=>document.getElementById(id);
+const enc=new TextEncoder(), dec=new TextDecoder();
+
+// ── b64 → Uint8Array (56자→41B, 깨지면 null) ──
+function b64dec(s){
+  try{
+    if(s.length<50) return null;
+    const bin=atob(s);
+    const u=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+    return u.length>=41?u:null;
+  }catch(e){return null;}
+}
+// ── 41B 슬롯 디코드 (little-endian) ──
+function parseSlot(d){
+  const dv=new DataView(d.buffer,d.byteOffset,d.byteLength);
+  return {
+    ms:dv.getUint32(0,true), h:d[4]/250, s:d[5]/250,
+    pkA:dv.getUint16(6,true), LA:dv.getUint16(8,true), dBA:d[10],
+    loHi:d[13]/10, cent:dv.getUint16(14,true), flat:d[16]/250,
+    flags:d[20], run_h:d[21], run_s:d[22],
+    bhi:d[28]/2, b57:d[29]/2, domHz:dv.getUint16(31,true),
+    sal:d[33], rev:d[34], prom:d[39], hb:d[40]/100,
+    fired:(d[20]&0x04)!==0
+  };
+}
+// ── 발동 축 추론(지표 기반·근사) ──
+function axisOf(v){
+  if(v.s>=0.75) return {t:"사이렌",c:"siren"};
+  if(v.h>=0.75) return {t:"경적",c:"horn"};
+  if(v.prom>=5&&v.hb>=0.30) return {t:"화재",c:"fire"};
+  if(v.sal>=18) return {t:"경보음",c:"siren"};
+  if(v.LA>=1800) return {t:"큰소리",c:"loud"};
+  return {t:"발동",c:""};
+}
+
+function nowHHMMSS(){const t=new Date();return t.toTimeString().slice(0,8);}
+
+// ── 수신 처리 ──
+function onLine(line){
+  lastRxAt=Date.now();
+  if(line.startsWith("S|")){
+    rawLines.push(line);
+    const p=line.split("|"); // S seq boot ms b64
+    if(p.length<5){bad++;return;}
+    const seq=+p[1], bt=+p[2];
+    if(!Number.isFinite(seq)){bad++;return;}
+    onBoot(bt);
+    const slot=b64dec(p[4].trim());
+    if(!slot){bad++;return;}      // 깨진 조각 버리고 계속
+    if(!seen.has(seq)){seen.add(seq);recvCount++;}
+    if(seq>maxSeq)maxSeq=seq;
+    const v=parseSlot(slot);
+    showLive(v,seq);
+    if(v.fired)addVib(v,seq);
+  }else if(line.startsWith("LSTAT|")){
+    const p=line.split("|");     // LSTAT head boot
+    const hd=+p[1], bt=+p[2];
+    if(Number.isFinite(hd))head=hd;
+    onBoot(bt);
+  }
+  updateProgress();
+}
+function onBoot(bt){
+  if(!Number.isFinite(bt))return;
+  if(boot===null){boot=bt;$("bootNo").textContent="#"+bt;}
+  else if(bt!==boot){                     // ★재부팅 = "다시 살아남"
+    boot=bt;$("bootNo").textContent="#"+bt;
+    $("aliveAt").textContent=nowHHMMSS();
+    head=0;maxSeq=0;recvCount=0;seen.clear();  // 새 부팅 = seq 리셋 → 진행률 기준 재설정(rawLines·최근진동은 보존)
+  }
+}
+function showLive(v,seq){
+  $("liveNow").textContent=`seq ${seq} · h ${v.h.toFixed(2)} · LA ${v.LA}(${v.dBA}dBA) · cent ${v.cent} · domHz ${v.domHz} · flat ${v.flat.toFixed(2)}`;
+}
+function addVib(v,seq){
+  const ax=axisOf(v);
+  recentVibs.unshift({at:nowHHMMSS(),ax,seq,h:v.h,LA:v.LA,dBA:v.dBA,domHz:v.domHz});
+  recentVibs.length=Math.min(recentVibs.length,3);
+  $("vibList").innerHTML=recentVibs.map(r=>
+    `<div class="vib"><span class="ax ${r.ax.c}">${r.ax.t}</span>`+
+    `<span>${r.at}</span>`+
+    `<span class="tag">h${r.h.toFixed(2)} · ${r.LA}(${r.dBA}dBA) · ${r.domHz}Hz</span></div>`
+  ).join("");
+}
+function updateProgress(){
+  const total=Math.max(head,maxSeq);
+  const pct=total>0?Math.min(100,Math.round(recvCount/total*100)):0;
+  $("pct").textContent=total>0?pct+"%":"–";
+  $("cnt").textContent=`${recvCount} / ${total}`;
+  $("barFill").style.width=pct+"%";
+  const missing=Math.max(0,total-recvCount);
+  $("gapMsg").textContent=missing>0?`빠진 ${missing}건 — 이어받기로 보충 중`+(bad?` · 깨진 조각 ${bad}`:""):(bad?`깨진 조각 ${bad} 버림`:"전량 수신 ✓");
+}
+function tickOp(){
+  const on=Date.now()-lastRxAt<2000;   // 최근 2초 수신 = 작동중
+  $("opState").textContent=on?"● ON":"○ OFF";
+  $("opState").style.color=on?"var(--ok)":"var(--dim)";
+  $("live").className="dot"+(on?" on":"");
+}
+setInterval(tickOp,500);
+
+// ── 이어받기: 받은 최대 seq → lseq (본체가 다음부터 재송신) ──
+async function sendCmd(str){
+  if(!rxChar)return;
+  try{await rxChar.writeValue(enc.encode(str));}catch(e){}
+}
+async function startStream(){
+  await sendCmd("live on");
+  if(maxSeq>0)await sendCmd("lseq "+maxSeq);   // 재연결 시 공백 보충
+}
+
+// ── BLE 연결 ──
+async function connect(){
+  if(!navigator.bluetooth){$("connMsg").textContent="이 브라우저는 Web Bluetooth 미지원(안드로이드 크롬/Bluefy 필요)";return;}
+  try{
+    $("connMsg").textContent="기기 선택 중…";
+    dev=await navigator.bluetooth.requestDevice({filters:[{services:[SVC]}]});
+    dev.addEventListener("gattserverdisconnected",onDisc);
+    wantConn=true;
+    await gattConnect();
+  }catch(e){$("connMsg").textContent="연결 취소/실패: "+e.message;}
+}
+async function gattConnect(){
+  const srv=await dev.gatt.connect();
+  const s=await srv.getPrimaryService(SVC);
+  const tx=await s.getCharacteristic(TX);
+  rxChar=await s.getCharacteristic(RX);
+  tx.addEventListener("characteristicvaluechanged",e=>{
+    rxBuf+=dec.decode(e.target.value);
+    let i;
+    while((i=rxBuf.indexOf("\n"))>=0){
+      const line=rxBuf.slice(0,i).trim();
+      rxBuf=rxBuf.slice(i+1);
+      if(line)try{onLine(line);}catch(err){bad++;}   // ★한 줄 오류로 멈추지 않음
+    }
+    if(rxBuf.length>4096)rxBuf="";                    // 폭주 방지
+  });
+  await tx.startNotifications();
+  $("connMsg").textContent="연결됨 · "+(dev.name||"NOKK");
+  $("btnConn").textContent="🔌 연결 끊기";
+  $("btnExport").disabled=false;
+  await requestWake();
+  await startStream();
+}
+function onDisc(){
+  $("connMsg").textContent="끊김 — 재연결 시도 중…";
+  $("live").className="dot";
+  rxChar=null;
+  if(wantConn)setTimeout(retry,1500);
+}
+async function retry(){
+  if(!wantConn||!dev)return;
+  try{await gattConnect();}catch(e){setTimeout(retry,2500);}  // 백오프 재시도
+}
+async function disconnect(){
+  wantConn=false;
+  await sendCmd("live off").catch(()=>{});
+  if(dev&&dev.gatt.connected)dev.gatt.disconnect();
+  $("btnConn").textContent="🔗 연결";
+  $("connMsg").textContent="연결 끊음";
+  releaseWake();
+}
+
+// ── Screen Wake Lock (화면 유지) ──
+async function requestWake(){
+  try{if("wakeLock" in navigator){wakeLock=await navigator.wakeLock.request("screen");$("btnWake").textContent="☀ 화면 유지중";}}catch(e){}
+}
+function releaseWake(){if(wakeLock){wakeLock.release().catch(()=>{});wakeLock=null;$("btnWake").textContent="☀ 화면 켜두기";}}
+document.addEventListener("visibilitychange",()=>{           // 화면 복귀 시 재획득
+  if(document.visibilityState==="visible"){
+    if(wantConn&&(!dev||!dev.gatt.connected))retry();        // 끊겼으면 재연결+이어받기
+    if(wantConn)requestWake();
+  }
+});
+
+// ── 내보내기 (받은 전량 → 텍스트) ──
+function exportData(){
+  const blob=new Blob([rawLines.join("\n")+"\n"],{type:"text/plain"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="nokk_live_"+new Date().toISOString().replace(/[:.]/g,"-").slice(0,19)+".txt";
+  a.click();URL.revokeObjectURL(a.href);
+}
+
+$("btnConn").onclick=()=>{(dev&&dev.gatt.connected)?disconnect():connect();};
+$("btnExport").onclick=exportData;
+$("btnWake").onclick=()=>{wakeLock?releaseWake():requestWake();};
+</script>
+</body>
+</html>
