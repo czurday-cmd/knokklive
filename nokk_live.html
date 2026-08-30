@@ -108,11 +108,17 @@ function parseSlot(d){
     flags:d[20], run_h:d[21], run_s:d[22],
     bhi:d[28]/2, b57:d[29]/2, domHz:dv.getUint16(31,true),
     sal:d[33], rev:d[34], prom:d[39], hb:d[40]/100,
-    fired:(d[20]&0x04)!==0
+    fired:(d[20]&0x04)!==0,
+    fireAxis:(((d[20]>>3)&0x01)|((d[20]>>5)&0x06))   // ★v3.9.7 저장된 발동축(0없음·1화재·2광역·3사이렌·4통합·5경적·6큰소리·7기타)
   };
 }
-// ── 발동 축 추론(지표 기반·근사) ──
+// ── 발동 축 ──
+// ★v3.9.7: 저장된 fireAxis 우선(정확). 구펌웨어(fireAxis=0)면 지표기반 추론(근사) 폴백.
+const AXMAP={1:{t:"화재",c:"fire"},2:{t:"경보음",c:"siren"},3:{t:"사이렌",c:"siren"},
+             4:{t:"경보음",c:"siren"},5:{t:"경적",c:"horn"},6:{t:"큰소리",c:"loud"},7:{t:"기타",c:""}};
 function axisOf(v){
+  if(v.fireAxis && AXMAP[v.fireAxis]) return AXMAP[v.fireAxis];   // ★저장값(정확)
+  // 폴백: 구펌웨어 하위호환(지표 추론·근사)
   if(v.s>=0.75) return {t:"사이렌",c:"siren"};
   if(v.h>=0.75) return {t:"경적",c:"horn"};
   if(v.prom>=5&&v.hb>=0.30) return {t:"화재",c:"fire"};
