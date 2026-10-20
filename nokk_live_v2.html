@@ -4,15 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1E56B8">
-<title>NOKK 시험 v2</title>
-<!-- R84-3 B · B30(v4.7.8-r79v3b) 시험 페이지 v2 · 한 파일 · 바깥 라이브러리 · 글꼴 없음 · 원래 nokk_live.html 은 그대로 -->
+<title>NOKK 시험 v2.1</title>
+<!-- R84-6 · B30(v4.7.8-r79v3b) 시험 페이지 v2.1 · 한 파일 · 바깥 라이브러리 · 글꼴 없음 · 원래 nokk_live.html 은 그대로 -->
 <style>
   :root{--blue:#1E56B8;--orange:#B4470F;--black:#1A1C1E;--gray:#6B7280;--line:#D0D4DA;--bg:#F2F3F5;--card:#FFFFFF;--text:#1A1C1E;--dim:#5B6270;--purple:#6B21A8}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;overscroll-behavior-y:none}
   body{padding-bottom:76px}
   button{font:inherit;min-height:44px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--text);padding:8px 12px;cursor:pointer}
   button:active{opacity:.75}
+  button:disabled{opacity:.45}
   .pri{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:700}
   .sec{border-color:var(--blue);color:var(--blue)}
   .sm{min-height:44px;padding:6px 12px;font-size:14px}
@@ -28,16 +29,19 @@
   #btnStop{border-color:var(--orange);color:var(--orange)}
   main{padding:10px}
   .card{background:var(--card);border-radius:14px;padding:12px;margin-bottom:10px;border:1px solid var(--line)}
-  .live .lr{display:grid;grid-template-columns:76px 1fr 72px;gap:8px;align-items:center;margin:4px 0}
+  .live .lr{display:grid;grid-template-columns:76px 1fr 72px;gap:8px;align-items:center;margin:16px 0 4px}
   .live .lab{font-size:13px;color:var(--dim)}
   .live .val{font-weight:800;font-variant-numeric:tabular-nums;text-align:right}
-  .meter{position:relative;height:16px;background:#E6E8EC;border-radius:8px;overflow:hidden}
-  .meter>i{position:absolute;left:0;top:0;bottom:0;background:var(--blue);border-radius:8px}
+  .meter{position:relative;height:16px;background:#E6E8EC;border-radius:8px}
+  .meter>i{position:absolute;left:0;top:0;bottom:0;background:var(--blue);border-radius:8px;max-width:100%}
   .meter.d>i{background:var(--orange)} .meter.a>i{background:var(--purple)}
   .tick{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--black)}
-  .tick span{position:absolute;top:-1px;right:4px;font-size:10px;color:var(--black);white-space:nowrap}
+  .tick span{position:absolute;top:-16px;left:1px;transform:translateX(-50%);font-size:11px;line-height:14px;color:var(--black);white-space:nowrap}
   #btnMiss{width:100%;min-height:64px;background:var(--black);border-color:var(--black);color:#fff;font-size:20px;font-weight:800;border-radius:14px}
-  #missLine{margin:4px 2px 10px}
+  #missLine{margin:4px 2px 6px}
+  .mrow{display:grid;grid-template-columns:66px 1fr auto;gap:2px 8px;align-items:center;border:1px solid var(--line);border-left:6px solid var(--black);border-radius:10px;background:var(--card);padding:6px 8px;margin-bottom:6px}
+  .mrow .mt{font-weight:800;font-variant-numeric:tabular-nums}
+  .mrow .ms{font-size:13px} .mrow .mb{display:flex;gap:4px}
   h2{font-size:16px;margin:12px 2px 6px}
   h3{font-size:15px;margin:14px 0 6px}
   .ev{display:grid;grid-template-columns:70px 1fr;grid-template-rows:auto auto auto;gap:2px 8px;width:100%;text-align:left;margin-bottom:6px;border-left-width:6px}
@@ -51,8 +55,10 @@
   nav#tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;display:grid;grid-template-columns:repeat(4,1fr);background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
   nav#tabs button{border:0;border-radius:0;min-height:60px;background:transparent;font-weight:700;color:var(--dim)}
   nav#tabs button.on{color:var(--blue);box-shadow:inset 0 3px 0 var(--blue)}
-  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--card);border-radius:16px 16px 0 0;box-shadow:0 -6px 24px rgba(0,0,0,.25);max-height:92vh;overflow-y:auto;transform:translateY(105%);transition:transform .2s;padding:12px 12px 24px}
+  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--card);border-radius:16px 16px 0 0;box-shadow:0 -6px 24px rgba(0,0,0,.25);max-height:92vh;overflow-y:auto;overscroll-behavior:contain;transform:translateY(105%);transition:transform .2s;padding:0 12px 24px}
   .sheet.open{transform:none}
+  .shTop{position:sticky;top:0;z-index:3;background:var(--card);display:flex;justify-content:space-between;align-items:center;padding:10px 0 8px;border-bottom:1px solid var(--line);margin-bottom:6px}
+  .shTop b{font-size:17px}
   .shT{font-size:18px;font-weight:800}
   .graph{width:100%;height:auto;border:1px solid var(--line);border-radius:10px;margin:6px 0;background:#fff}
   .jgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
@@ -64,10 +70,11 @@
   .jUNK{border-color:var(--gray);color:var(--gray)} .jUNK.on{background:#E6E8EC}
   .chip{min-height:44px;margin:3px 4px 3px 0;border-radius:22px;font-size:14px}
   .chip.on{background:var(--blue);border-color:var(--blue);color:#fff}
-  .full{position:fixed;inset:0;z-index:50;background:var(--bg);overflow-y:auto;display:none;padding-bottom:30px}
+  .full{position:fixed;inset:0;z-index:50;background:var(--bg);overflow-y:auto;overscroll-behavior:contain;display:none;padding-bottom:30px}
   .full.open{display:block}
-  .fhead{position:sticky;top:0;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;padding:8px 10px}
+  .fhead{position:sticky;top:0;z-index:3;background:var(--card);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;padding:8px 10px}
   .fhead b{font-size:17px}
+  .note{font-size:13px;color:var(--orange);margin:4px 0}
   textarea,input[type=text]{width:100%;font:inherit;border:1.5px solid var(--line);border-radius:10px;padding:10px;min-height:44px}
   table.bl{width:100%;border-collapse:collapse;font-size:13px;background:var(--card)}
   table.bl td{border-bottom:1px solid var(--line);padding:5px 4px;vertical-align:top}
@@ -79,14 +86,16 @@
   .rangebar i{position:absolute;top:0;bottom:0;background:var(--blue)}
   .tog{width:100%;text-align:left;margin:4px 0}
   .tog.on{border-color:var(--blue);color:var(--blue);font-weight:700}
+  .seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:4px 0}
+  .seg button.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:700}
   .log{white-space:pre-wrap;font-size:11px;color:var(--dim);max-height:240px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px}
   .err{color:var(--orange);font-size:14px;min-height:18px}
 </style>
 </head>
 <body>
 <header id="bar">
-  <div class="row"><button id="btnConn">연결</button><span id="stConn" class="pill poff">끊김</span><span id="stMic" class="pill">마이크 ?</span><span id="stBoot" class="pill">boot ?</span>
-    <button id="btnNow" class="sec">지금부터 받기</button><button id="btnStop" style="display:none">그만 받기</button></div>
+  <div class="row"><button id="btnConn">연결</button><span id="stConn" class="pill poff">끊김</span><span id="stMode" class="pill">모드 ?</span><span id="stMic" class="pill">마이크 ?</span><span id="stBoot" class="pill">boot ?</span>
+    <button id="btnNow" class="sec" style="display:none">지금부터 받기</button><button id="btnStop" style="display:none">그만 받기</button></div>
   <div class="row" style="margin-top:4px"><span id="stLive" class="pill">—</span><span id="stData" class="small">자료 없음</span><span id="stRange" class="small"></span></div>
 </header>
 <main>
@@ -98,6 +107,7 @@
     </div>
     <button id="btnMiss">놓침 신고</button>
     <div id="missLine" class="small">오늘 놓침 0</div>
+    <div id="missList"></div>
     <h2>판정 안 한 울림 <span id="unjN">0</span></h2>
     <div id="evUnj"><div class="muted">판정 안 한 울림 없음</div></div>
     <h2>판정한 울림 · 최근 5</h2>
@@ -113,6 +123,7 @@
   <section id="tab-log" style="display:none">
     <div class="card"><div class="small">오늘 받은 범위(파랑 = 받음 · 주황 = 빈 곳 · 00시 ~ 24시)</div><div id="logBar" class="rangebar"></div>
       <div id="logCounts" class="kv"></div><div id="logStore" class="small"></div></div>
+    <div class="card"><button id="btnGap" class="sec" style="width:100%">끊긴 동안 울림 받기</button><div class="note">받는 동안 1~2 분 실시간 멈춤</div><div id="gapMsg" class="small"></div></div>
     <div class="card"><div class="small">시각 찾기(HHMMSS 숫자 6 개 · 콜론 넣어도 됨 · 오늘)</div><div class="row"><input type="text" id="findTime" inputmode="numeric" placeholder="예: 143205" style="flex:1"><button id="btnFind" class="pri">찾기</button></div><div id="findErr" class="err"></div></div>
     <div class="card"><button id="btnExp" class="pri" style="width:100%">오늘 것 내보내기(zip)</button><div id="expMsg" class="small" style="margin-top:6px"></div>
       <button id="btnDelExp" class="sec" style="width:100%;margin-top:8px">내보낸 것 폰에서 지우기</button></div>
@@ -121,7 +132,7 @@
 </main>
 <nav id="tabs"><button id="tb-events" class="on">울림</button><button id="tb-recs">녹음</button><button id="tb-log">기록</button><button id="tb-set">설정</button></nav>
 <div id="sheet" class="sheet">
-  <div class="row" style="justify-content:space-between"><b>판정</b><button id="shClose" class="sm">닫기</button></div>
+  <div class="shTop"><b>판정</b><button id="shClose" class="sm">닫기</button></div>
   <div id="shHead"></div>
   <canvas id="shCanvas" width="680" height="240" class="graph"></canvas>
   <div id="shMain" class="jgrid"></div>
@@ -129,12 +140,14 @@
   <label class="kv" style="display:flex;gap:8px;align-items:center;min-height:44px"><input type="checkbox" id="shCar" style="width:24px;height:24px"> 차 안이었음</label>
   <textarea id="shMemo" rows="2" placeholder="메모(선택)"></textarea>
   <div id="shErr" class="err"></div>
-  <button id="shSave" class="pri" style="width:100%;min-height:52px">저장</button>
+  <button id="shSave" class="pri" style="width:100%;min-height:52px">저장(저장하면 창이 닫힘)</button>
   <div id="shHist" class="small" style="margin-top:6px"></div>
 </div>
 <div id="missPage" class="full">
   <div class="fhead"><button id="missBack" class="sm">뒤로</button><b>놓침 신고</b></div>
   <main>
+    <div class="note">이 신고는 누른 순간 이미 저장됐습니다. 아래 자세히는 나중에 고쳐도 됩니다.</div>
+    <div class="note">녹음은 누른 순간 앞 5 초 + 뒤 5 초만 남습니다(시험자 모드일 때).</div>
     <div id="missRec" class="kv"></div>
     <h3>언제</h3><div id="missWhen"></div>
     <div id="missTimeRow" style="display:none"><input type="text" id="missTime" inputmode="numeric" placeholder="HHMMSS(예: 143205) · 날짜 = 오늘"><div id="missErr" class="err"></div></div>
@@ -159,7 +172,7 @@
 (function (G) {
 "use strict";
 const C = {};
-C.PAGE_VER = "v2 · 2026-10-19";
+C.PAGE_VER = "v2.1 · 2026-10-20";
 C.UUID = { SVC: "6e400001-b5a3-f393-e0a9-e50e24dcca9e", TX: "6e400003-b5a3-f393-e0a9-e50e24dcca9e", RX: "6e400002-b5a3-f393-e0a9-e50e24dcca9e", AUD: "6e400004-b5a3-f393-e0a9-e50e24dcca9e" };
 C.REC = { HDR: 2656, PCM: 320000, TOTAL: 322660, SR: 16000, TAG: 0x52 };          // rec10.h:19-28 · rec10.cpp:270
 C.LSEQ_NOW = 4294967295;                                                         // lseq 4294967295 = 지금부터(ble_link.cpp:378-384 · 커서 0 넘침)
@@ -380,7 +393,7 @@ function whyNot(sl, i, ctx) {
   else {
     const n = aggCount(sl, i), one = s.alarm >= T.ALARM, agg = n >= T.AGG_K;
     add(A, "score", "경보음 0.90", one ? "통과" : (agg ? "참고" : "막음"), "p_alarm " + fmt2(s.alarm) + (one ? " ≥ " : " < ") + T.ALARM, ".ino:394 · 2939");
-    add(A, "agg", "오래 듣기", agg ? "통과" : (one ? "참고" : "막음"), "최근 8 슬 중 ≥ 0.50 " + n + " 개(≥ 4)" + (i < 7 ? " · 앞 슬 일부 없음" : ""), ".ino:193-196 · 2933-2938");
+    add(A, "agg", "오래 듣기", agg ? "통과" : (one ? "참고" : "막음"), "최근 8 슬 중 ≥ " + T.AGG_T.toFixed(2) + " " + n + " 개(≥ 4)" + (i < 7 ? " · 앞 슬 일부 없음" : ""), ".ino:193-196 · 2933-2938");
   }
   if (ctx.mask === null || ctx.mask === undefined) add(A, "mask", "모드 마스크", "셀 수 없음", "stat 의 mask 모름", ".ino:2941");
   else add(A, "mask", "모드 마스크", (ctx.mask & C.AX.ALARMNN) ? "통과" : "막음", "경보음 비트 0x10 " + ((ctx.mask & C.AX.ALARMNN) ? "켜짐" : "꺼짐"), ".ino:470 · 2941");
@@ -470,49 +483,82 @@ G.NOKK = { C: C, b64ToBytes: b64ToBytes, bytesToB64: bytesToB64, crc32: crc32, h
 })(typeof window !== "undefined" ? window : globalThis);
 </script>
 <script id="nokk-app">
-/* ===== NOKK 시험 페이지 v2 — 앱(연결 · 저장 · 화면) ===== */
+/* ===== NOKK 시험 페이지 v2.1 — 앱(연결 · 저장 · 화면) · R84-6(10/20 출근길 문제 고침 + 모드 · B70) ===== */
 (function () {
 "use strict";
 const N = window.NOKK, C = N.C, T = C.TH;
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s === null || s === undefined ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const now = () => Date.now();
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const enc = new TextEncoder();
 /* ---------- 상태 ---------- */
 const S = {
   dev: null, tx: null, rx: null, aud: null, wantConn: false, conn: "끊김", dec: new TextDecoder(), rxBuf: "",
-  ver: null, stat: null, st2: null, statAt: 0, statMsg: null, lstat: null, liveOn: false, seqBusy: false,
+  connecting: false, retryTimer: null, retryN: 0,
+  ver: null, stat: null, st2: null, statAt: 0, statMsg: null, lstat: null, liveOn: false, seqBusy: false, testerKnown: null,
   boot: null, latest: null, latestRx: 0, ring: [], ringMax: 2400, micBad: [], firstAfterLive: false,
   events: new Map(), marks: [], misses: [], recs: new Map(), clock: new Map(), gaps: [], ranges: [],
-  meta: {}, settings: { tester: false, autoRec: true, timeSync: true, wake: true },
-  q: [], qBusy: false, cur: null, oneshots: [], batch: null, rec: null, recParts: {}, recLastSum: null, wake: null,
+  meta: {}, settings: { tester: false, autoRec: true, timeSync: true, wake: true, mode: "out", b70: true },
+  q: [], qBusy: false, cur: null, oneshots: [], batch: null, evOpen: null, rec: null, recParts: {}, recLastSum: null, wake: null,
   pausedWhy: "", exportBlob: null, lastExport: null, sheetKey: null, judge: null, missDraft: null, tcheckT: null, log: [],
+  modeChk: null, b70Chk: null, dbMig: null, evWaitMs: 180000,   // evWaitMs = go ev 끝 줄 기다림(시험만 줄여 씀)
 };
 window.NOKK_APP = S;           // 시험 · 점검용(페이지 동작에는 안 씀)
 /* ---------- IndexedDB(받는 즉시 1 s 묶음 쓰기 · 페이지를 닫아도 남음) ---------- */
-const DB = { db: null, wq: {}, flushing: false };
-const STORES = { srec: { keyPath: "k", idx: [["bootMs", ["boot", "ms"]], ["day", "day"]] }, lines: { autoIncrement: true, idx: [["day", "day"]] },
-  events: { keyPath: "k", idx: [["day", "day"]] }, marks: { autoIncrement: true, idx: [["bootMs", ["boot", "ms"]]] }, misses: { keyPath: "id", idx: [["day", "day"]] },
-  recs: { keyPath: "k", idx: [["day", "day"]] }, recwav: { keyPath: "k" }, clock: { keyPath: "boot" }, gaps: { autoIncrement: true, idx: [["day", "day"]] }, meta: { keyPath: "key" } };
+/* ★v2.1 DB 판 2 — lines 를 keyPath "id"(자동 번호)로: 옛 판(키 없는 autoIncrement)은 내보낸 표시를 다시 넣을 때 새 줄이 생겼음(두 번째 내보내기 events.txt 2 배)
+ *   옛 판 → 새 판: 옛 줄의 키를 id 로 그대로 옮겨 담음(자료 보존 · 지우는 것 없음) */
+const DB_VER = 2;
+const DB = { db: null, wq: {}, flushing: null, next: null };
+const STORES = { srec: { keyPath: "k", idx: [["bootMs", ["boot", "ms"]], ["day", "day"]] }, lines: { keyPath: "id", auto: true, idx: [["day", "day"]] },
+  events: { keyPath: "k", idx: [["day", "day"]] }, marks: { auto: true, idx: [["bootMs", ["boot", "ms"]]] }, misses: { keyPath: "id", idx: [["day", "day"]] },
+  recs: { keyPath: "k", idx: [["day", "day"]] }, recwav: { keyPath: "k" }, clock: { keyPath: "boot" }, gaps: { auto: true, idx: [["day", "day"]] }, meta: { keyPath: "key" } };
+function mkStore(db, n, o) {
+  const s = db.createObjectStore(n, o.keyPath ? (o.auto ? { keyPath: o.keyPath, autoIncrement: true } : { keyPath: o.keyPath }) : { autoIncrement: true });
+  for (const [iname, kp] of (o.idx || [])) s.createIndex(iname, kp);
+  return s;
+}
 function dbOpen() {
   return new Promise((res, rej) => {
-    const r = indexedDB.open("nokk_v2", 1);
-    r.onupgradeneeded = () => { const db = r.result; for (const [n, o] of Object.entries(STORES)) { if (db.objectStoreNames.contains(n)) continue; const s = db.createObjectStore(n, o.keyPath ? { keyPath: o.keyPath } : { autoIncrement: true }); for (const [iname, kp] of (o.idx || [])) s.createIndex(iname, kp); } };
-    r.onsuccess = () => { DB.db = r.result; res(DB.db); }; r.onerror = () => rej(r.error);
+    const r = indexedDB.open("nokk_v2", DB_VER);
+    r.onupgradeneeded = (e) => {
+      const db = r.result, tx = r.transaction, oldV = e.oldVersion;
+      const needLines = oldV >= 1 && db.objectStoreNames.contains("lines") && tx.objectStore("lines").keyPath === null;
+      for (const [n, o] of Object.entries(STORES)) { if (db.objectStoreNames.contains(n)) continue; mkStore(db, n, o); }
+      if (needLines) {                                                          // ★옛 판 1 → 2: 줄을 키 그대로 옮김
+        const old = tx.objectStore("lines"), rows = [], cr = old.openCursor();
+        cr.onsuccess = () => {
+          const c = cr.result;
+          if (c) { rows.push([c.primaryKey, c.value]); c.continue(); return; }
+          db.deleteObjectStore("lines"); const ns = mkStore(db, "lines", STORES.lines);
+          for (const [k, v] of rows) { v.id = k; ns.put(v); }
+          S.dbMig = { from: oldV, to: DB_VER, lines: rows.length, at: now() };
+        };
+      }
+    };
+    r.onsuccess = () => {
+      DB.db = r.result;
+      if (S.dbBlocked) { note("DB 판 올림 막힘 풀림 " + ((now() - S.dbBlocked) / 1000).toFixed(1) + " s"); S.dbBlocked = 0; }
+      DB.db.onversionchange = () => { try { DB.db.close(); } catch (e) {} DB.db = null; S.dbClosed = now(); note("다른 창이 새 판 저장소를 엶 — 이 창은 저장을 멈춤(새로고침 필요)"); renderStatus(); };   // ★다음 판 올림을 이 창이 막지 않게
+      res(DB.db);
+    };
+    r.onerror = () => rej(r.error);
+    r.onblocked = () => { S.dbBlocked = now(); note("DB 판 올림이 다른 창에 막힘 — 다른 NOKK 창을 닫아 주세요"); renderStatus(); };
   });
 }
 function dbPut(store, obj) { (DB.wq[store] = DB.wq[store] || []).push(obj); }
-function dbFlush() {
-  if (!DB.db || DB.flushing) return Promise.resolve();
+function dbFlush() {   // ★v2.1 — 쓰는 중이면 '다음 묶음 하나'를 모두가 같이 기다림(그 묶음이 지금까지 쌓인 것을 씀 · 옛 판은 바로 돌아와 저장 전에 다음 일로 넘어갔음)
+  if (!DB.db) return Promise.resolve();
+  if (DB.flushing) { if (!DB.next) DB.next = DB.flushing.then(() => { DB.next = null; return dbFlush(); }); return DB.next; }   // 대기자마다 줄 서면 1 s 마다 끼어드는 대기자에 밀려 끝없이 늦어짐(시험 S1 · ack 8 s+)
   const names = Object.keys(DB.wq).filter((n) => DB.wq[n].length); if (!names.length) return Promise.resolve();
   const batch = {}; for (const n of names) { batch[n] = DB.wq[n]; DB.wq[n] = []; }
-  DB.flushing = true;
-  return new Promise((res) => {
-    const tx = DB.db.transaction(names, "readwrite");
+  DB.flushing = new Promise((res) => {
+    let back = false; const tx = DB.db.transaction(names, "readwrite");
     for (const n of names) { const st = tx.objectStore(n); for (const o of batch[n]) st.put(o); }
-    tx.oncomplete = () => { DB.flushing = false; res(); };
-    tx.onerror = tx.onabort = () => { DB.flushing = false; for (const n of names) DB.wq[n] = batch[n].concat(DB.wq[n]); res(); };
+    tx.oncomplete = () => { DB.flushing = null; res(); };
+    tx.onerror = tx.onabort = () => { DB.flushing = null; if (!back) { back = true; for (const n of names) DB.wq[n] = batch[n].concat(DB.wq[n]); } res(); };
   });
+  return DB.flushing;
 }
 setInterval(dbFlush, 1000);
 function dbAll(store, index, range) {
@@ -521,20 +567,49 @@ function dbAll(store, index, range) {
 function dbGet(store, key) { return new Promise((res) => { const r = DB.db.transaction([store], "readonly").objectStore(store).get(key); r.onsuccess = () => res(r.result); r.onerror = () => res(undefined); }); }
 function dbDel(store, keys) { return new Promise((res) => { const tx = DB.db.transaction([store], "readwrite"); const st = tx.objectStore(store); for (const k of keys) st.delete(k); tx.oncomplete = () => res(); tx.onerror = () => res(); }); }
 function metaSet(k, v) { S.meta[k] = v; dbPut("meta", { key: k, value: v }); }
+/* ★v2.1 바로 쓰기 — 놓침 · 판정은 1 s 묶음을 기다리지 않고 제 거래로 곧장(묶음이 도는 중이면 그 뒤에 줄 서다 새로고침에 잘릴 수 있었음 · 시험 S4 3 회차) */
+function dbPutNow(store, obj) {
+  return new Promise((res) => {
+    if (!DB.db) { dbPut(store, obj); res(false); return; }
+    try { const tx = DB.db.transaction([store], "readwrite"); tx.objectStore(store).put(obj); tx.oncomplete = () => res(true); tx.onerror = tx.onabort = () => { dbPut(store, obj); res(false); }; }
+    catch (e) { dbPut(store, obj); res(false); }
+  });
+}
+/* 놓침 신고 앞서 적기(localStorage · 동기) — 누른 바로 뒤 페이지가 닫혀도 다음 시작 때 되살림 · IndexedDB 에 들어가면 지움 */
+const WAL_KEY = "nokk_v21_miss_wal";
+function walRead() { try { const a = JSON.parse(localStorage.getItem(WAL_KEY) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+function walWrite(a) { try { if (a.length) localStorage.setItem(WAL_KEY, JSON.stringify(a)); else localStorage.removeItem(WAL_KEY); } catch (e) {} }
+function walAdd(m) { walWrite(walRead().filter((x) => x.id !== m.id).concat([m])); }
+function walDel(id) { walWrite(walRead().filter((x) => x.id !== id)); }
+function missPut(m) { return dbPutNow("misses", m).then((ok) => { if (ok) walDel(m.id); return ok; }); }
 function logLine(kind, line, rx) { dbPut("lines", { rx: rx || now(), line: line, kind: kind, day: N.dayOf(rx || now()), exp: 0 }); }
 function note(msg) { S.log.unshift(N.hms(now()) + " " + msg); S.log.length = Math.min(S.log.length, 80); const e = $("cmdlog"); if (e) e.textContent = S.log.slice(0, 30).join("\n"); }
-/* ---------- BLE(ble_link.cpp:17-22 · nokk_live.html:207-248 과 같은 길 · 끊기면 1.5 s 뒤 · 그 뒤 2.5 s 마다) ---------- */
+/* ---------- BLE(ble_link.cpp:17-22) · 다시 붙기는 한 번에 하나(첫 실패 1.5 s · 그 뒤 2.5 s) ---------- */
 async function connect() {
   if (!navigator.bluetooth) { setConn("끊김", "이 브라우저는 Web Bluetooth 없음(안드로이드 크롬)"); return; }
-  try {
-    setConn("다시 붙는 중", "기기 고르는 중…");
-    S.dev = await navigator.bluetooth.requestDevice({ filters: [{ services: [C.UUID.SVC] }] });
-    S.dev.removeEventListener("gattserverdisconnected", onDisc); S.dev.addEventListener("gattserverdisconnected", onDisc);
-    S.wantConn = true; await gattConnect();
-  } catch (e) { setConn("끊김", "연결 취소 · 실패: " + e.message); }
+  if (S.dev && S.wantConn) { note("[연결] — 고른 기기에 바로 다시 붙기"); retryNow(); return; }    // ★'다시 붙는 중…'에 멈추지 않게
+  let d = null;
+  try { setConn("다시 붙는 중", "기기 고르는 중…"); d = await navigator.bluetooth.requestDevice({ filters: [{ services: [C.UUID.SVC] }] }); }
+  catch (e) { setConn("끊김", "연결 취소 · 실패: " + e.message); return; }
+  if (S.dev && S.dev !== d) S.dev.removeEventListener("gattserverdisconnected", onDisc);
+  S.dev = d; d.removeEventListener("gattserverdisconnected", onDisc); d.addEventListener("gattserverdisconnected", onDisc);
+  S.wantConn = true; S.retryN = 0; retryNow();
+}
+function scheduleRetry(ms) { if (S.retryTimer) clearTimeout(S.retryTimer); S.retryTimer = setTimeout(() => { S.retryTimer = null; retryNow(); }, ms); }
+async function retryNow() {
+  if (!S.wantConn || !S.dev) return;
+  if (S.connecting || (S.tx && S.dev.gatt && S.dev.gatt.connected)) return;           // ★한 번에 하나만(화면이 다시 보일 때 겹쳐 돌지 않게)
+  if (S.retryTimer) { clearTimeout(S.retryTimer); S.retryTimer = null; }
+  S.connecting = true; setConn("다시 붙는 중");
+  try { await gattConnect(); S.retryN = 0; }
+  catch (e) {
+    const ms = S.retryN++ === 0 ? 1500 : 2500;
+    note("붙기 실패(" + e.message + ") — " + (ms / 1000) + " s 뒤 다시");
+    try { if (S.dev.gatt.connected) S.dev.gatt.disconnect(); } catch (e2) {}
+    S.tx = S.rx = S.aud = null; setConn("다시 붙는 중"); if (S.wantConn) scheduleRetry(ms);
+  } finally { S.connecting = false; renderStatus(); }
 }
 async function gattConnect() {
-  setConn("다시 붙는 중");
   const srv = await S.dev.gatt.connect(); const svc = await srv.getPrimaryService(C.UUID.SVC);
   const tx = await svc.getCharacteristic(C.UUID.TX), rx = await svc.getCharacteristic(C.UUID.RX); let aud = null;
   try { aud = await svc.getCharacteristic(C.UUID.AUD); } catch (e) { aud = null; }
@@ -545,19 +620,24 @@ async function gattConnect() {
   runConnectSeq();
 }
 function onDisc() {
-  S.tx = S.rx = S.aud = null; S.liveOn = false; S.seqBusy = false;
+  S.tx = S.rx = S.aud = null; S.liveOn = false; S.seqBusy = false; S.evOpen = null;   // 기기는 끊기면 배치를 접음(ble_link.cpp:147-148)
   failAllCmds("끊김"); if (S.batch) S.batch.done = true; if (S.rec) S.rec.disc = true;
   setConn(S.wantConn ? "다시 붙는 중" : "끊김", S.wantConn ? "끊김 — 1.5 s 뒤 다시" : "연결 끊음");
-  if (S.wantConn) setTimeout(retry, 1500);
+  if (S.wantConn) { S.retryN = 1; scheduleRetry(1500); }
 }
-async function retry() { if (!S.wantConn || !S.dev) return; try { await gattConnect(); } catch (e) { setTimeout(retry, 2500); } }
 async function disconnect() {
-  S.wantConn = false;
+  S.wantConn = false; if (S.retryTimer) { clearTimeout(S.retryTimer); S.retryTimer = null; }
   try { if (S.rx) await writeRaw("live off"); } catch (e) {}
   try { if (S.dev && S.dev.gatt.connected) S.dev.gatt.disconnect(); } catch (e) {}
   setConn("끊김", "연결 끊음"); wakeOff();
 }
-async function writeRaw(text) { if (!S.rx) throw new Error("연결 없음"); note("→ " + text); logLine("cmd", "> " + text); await S.rx.writeValue(enc.encode(text)); }
+/* ★v2.1 블루투스 쓰기는 한 줄씩(겹치면 'GATT operation already in progress') */
+let wchain = Promise.resolve();
+function writeRaw(text) {
+  const p = wchain.then(async () => { if (!S.rx) throw new Error("연결 없음"); note("→ " + text); logLine("cmd", "> " + text); await S.rx.writeValue(enc.encode(text)); });
+  wchain = p.catch(() => {});
+  return p;
+}
 /* 명령은 한 번에 하나 · 응답을 받은 뒤 다음(응답 없는 명령은 소스대로 짧게 기다림) */
 function cmd(text, o) {
   o = o || {};
@@ -578,13 +658,19 @@ function finishCmd(c, ok, why, line) {
   if (S.cur !== c) return; clearInterval(c.timer); S.cur = null; S.qBusy = false;
   c.res({ ok: ok, why: why, line: line || null, lines: c.collect }); setTimeout(pumpQ, 0);
 }
-function failAllCmds(why) { if (S.cur) finishCmd(S.cur, false, why); while (S.q.length) S.q.shift().res({ ok: false, why: why, lines: [] }); }
-function sendNow(text, expect, timeout) {   // ★놓침 신고 rec — 줄 서지 않고 바로(응답은 따로 기다림)
+function failAllCmds(why) { if (S.cur) finishCmd(S.cur, false, why); while (S.q.length) S.q.shift().res({ ok: false, why: why, lines: [] }); for (const w of S.oneshots.splice(0)) w.res(null); }
+function sendNow(text, expect, timeout) {   // ★줄 서지 않고 바로(놓침 rec · 녹음 get/ack — 응답은 따로 기다림) · 쓰기 실패 = {writeFail}
   return new Promise((res) => {
     const w = { expect: expect, res: res, t0: now() }; S.oneshots.push(w);
-    setTimeout(() => { const i = S.oneshots.indexOf(w); if (i >= 0) { S.oneshots.splice(i, 1); res(null); } }, timeout || 3000);
-    writeRaw(text).catch(() => { const i = S.oneshots.indexOf(w); if (i >= 0) { S.oneshots.splice(i, 1); res(null); } });
+    const done = (v) => { const i = S.oneshots.indexOf(w); if (i >= 0) { S.oneshots.splice(i, 1); res(v); } };
+    setTimeout(() => done(null), timeout || 3000);
+    writeRaw(text).catch((e) => done({ writeFail: true, why: e.message }));
   });
+}
+async function sendNowRetry(text, expect, timeout) {   // ★쓰기 겹침으로 실패하면 0.3 s 뒤 1 번 다시
+  let r = await sendNow(text, expect, timeout);
+  if (r && r.writeFail) { note(text + " 쓰기 실패(" + r.why + ") — 0.3 s 뒤 다시"); await sleep(300); r = await sendNow(text, expect, timeout); }
+  return r;
 }
 /* ---------- 받은 줄 ---------- */
 function onTx(e) {
@@ -606,8 +692,8 @@ function onLine(line, rx) {
     logLine(line.split("|")[0], line, rx);
     if (line.startsWith("EV|")) onEV(line, rx);
     else if (line.startsWith("REC|")) onREC(line, rx);
-    else if (line.startsWith("ST2|")) { S.st2 = N.parseST2(line); renderSettings(); }
-    else if (line.startsWith("ST|")) { S.stat = N.parseST(line); S.statAt = rx; S.statFresh = true; renderSettings(); }
+    else if (line.startsWith("ST2|")) { S.st2 = N.parseST2(line); S.testerKnown = { v: S.st2.tester, src: "ST2", at: rx }; renderSettings(); }
+    else if (line.startsWith("ST|")) { S.stat = N.parseST(line); S.statAt = rx; S.statFresh = true; checkMode(); renderSettings(); }
     else if (line.startsWith("VER|")) { S.ver = N.parseVER(line); renderSettings(); }
     else if (line.startsWith("STAT|")) { S.statMsg = N.parseSTAT(line); }
     else if (line.startsWith("LSTAT|")) { S.lstat = N.parseLSTAT(line); }
@@ -689,8 +775,9 @@ function evRow(ev) {
   const j = ev.judge ? JUDGE[ev.judge.main] : "판정 안 함";
   const cls = ev.judge ? ({ TP: "jtp", FP1: "jfp1", FP2: "jfp2", UNK: "junk" })[ev.judge.main] : "jnone";
   return '<button class="ev ' + cls + '" data-k="' + esc(ev.k) + '"><span class="evt">' + esc(N.hms(ev.t)) + '</span><span class="evk">' + esc(C.KIND_NAME[ev.kind] || "기타") + (ev.gap ? ' <i class="tag">끊겨 있던 동안</i>' : "") +
-    '</span><span class="evr">' + esc(ev.reason || "") + '</span><span class="evs">녹음 ' + esc(ev.recState || "없음") + ' · <b>' + esc(j) + '</b></span></button>';
+    '</span><span class="evr">' + esc(ev.reason || "") + '</span><span class="evs">녹음 ' + esc(recStateOf(ev)) + ' · <b>' + esc(j) + '</b></span></button>';
 }
+function recStateOf(ev) { const r = ev.rec ? S.recs.get(ev.rec) : null; if (r) return r.state + (r.state === "받는 중" ? " " + (r.pct || 0) + " %" : ""); return ev.recState || "없음"; }
 function renderEvents() {
   const el = $("evUnj"), el2 = $("evJ"); if (!el) return;
   const all = Array.from(S.events.values()).sort((a, b) => (b.t || 0) - (a.t || 0));
@@ -698,14 +785,38 @@ function renderEvents() {
   $("unjN").textContent = unj.length; el.innerHTML = unj.length ? unj.map(evRow).join("") : '<div class="muted">판정 안 한 울림 없음</div>';
   const showAll = S.showAllJudged; el2.innerHTML = jd.length ? jd.slice(0, showAll ? jd.length : 5).map(evRow).join("") : '<div class="muted">아직 없음</div>';
   $("btnAllJ").style.display = jd.length > 5 ? "" : "none"; $("btnAllJ").textContent = showAll ? "최근 5 개만" : "모두 보기(" + jd.length + ")";
-  const today = N.dayOf(now()); const misses = S.misses.filter((m) => m.day === today);
-  $("missLine").textContent = "오늘 놓침 " + misses.length + (misses.length ? " · 마지막 " + N.hms(misses[misses.length - 1].savedAt) : "");
+  renderMissList();
 }
-/* ---------- 끊겨 있던 동안 울림(go ev · ble_link.cpp:210-212 · 530-540 · EVEND :361) ---------- */
+/* ---------- 오늘 놓침 목록(울림 탭) ---------- */
+function missRecState(m) { const r = m.rec ? S.recs.get(m.rec) : (m.recId !== undefined && m.recBoot !== undefined ? S.recs.get(m.recBoot + "_" + m.recId) : null); if (r) return r.state + (r.state === "받는 중" ? " " + (r.pct || 0) + " %" : ""); return m.recState || "없음"; }
+function renderMissList() {
+  const el = $("missList"); if (!el) return;
+  const today = N.dayOf(now()); const ms = S.misses.filter((m) => m.day === today).sort((a, b) => (b.press || 0) - (a.press || 0));
+  $("missLine").textContent = "오늘 놓침 " + ms.length + (ms.length ? " · 마지막 누름 " + N.hms(ms[0].press) : "");
+  el.innerHTML = ms.map((m) => '<div class="mrow" data-mid="' + esc(m.id) + '"><span class="mt">' + esc(N.hms(m.t)) + '</span><span class="ms">' + esc(m.sound || "자세히 안 고름") + (m.place ? " · " + esc(m.place) : "") +
+    '<br><span class="small">녹음 ' + esc(missRecState(m)) + '</span></span><span class="mb"><button class="sm" data-medit="' + esc(m.id) + '">고치기</button><button class="sm" data-mtc="' + esc(m.id) + '">시각 확인</button></span></div>').join("");
+}
+/* ---------- 원장 받기(go ev · ble_link.cpp:210-212 · 520-540 · EVEND :361) ---------- */
+/* ★v2.1 짝 맞추기: 보낸 since 와 from= 이 같은 EVBEGIN · EVEND 만 그 요청 것 · 다른 from 의 EVBEGIN · EVEND · L 줄은 버림(기록 lines 에는 남음)
+ *   기기는 since > 원장 머리면 머리로 자름(ble_link.cpp:534) → EVBEGIN head < since ∧ from = head 도 그 요청 것으로 봄
+ *   기다림 = 최대 180 s · 기기 쪽 요청(evOpen)이 안 끝났으면 새 go ev 를 보내지 않음(끊기면 기기가 접음) */
+const EV_WAIT_MS = 180000, EV_OPEN_MAX_MS = 600000;
+function evMatch(from, b) { return from === b.cur || (b.clampHead !== null && from === b.clampHead); }
 function onBatchLine(line, rx) {
-  const b = S.batch; if (!b) return;
-  if (line.startsWith("EVBEGIN|")) { b.begin = N.parseEVBEGIN(line); return; }
-  if (line.startsWith("EVEND|")) { b.end = N.parseEVEND(line); return; }
+  const b = S.batch;
+  if (line.startsWith("EVBEGIN|")) {
+    const e = N.parseEVBEGIN(line); if (!b) { note("요청 없는 EVBEGIN from=" + e.from + " 버림"); return; }
+    if (e.from === b.cur || (e.head !== null && e.head < b.cur && e.from === e.head)) { b.began = true; b.clampHead = e.from === b.cur ? null : e.head; }
+    else note("다른 요청 EVBEGIN from=" + e.from + "(보낸 since " + b.cur + ") 버림");
+    return;
+  }
+  if (line.startsWith("EVEND|")) {
+    const e = N.parseEVEND(line);
+    if (S.evOpen && (e.from === S.evOpen.since || e.from === S.evOpen.clamp)) S.evOpen = null;       // 기기 쪽 그 요청 끝(늦게 와도)
+    if (b && evMatch(e.from, b)) { b.end = e; S.evOpen = null; } else note("다른 요청 EVEND from=" + e.from + " 버림");
+    return;
+  }
+  if (!b || !b.began || b.end) return;
   const l = N.parseLedger(line); if (!l) return; b.lines++; b.got.push(l);
 }
 function applyLedgerLines(lines, markGap) {
@@ -720,27 +831,78 @@ function applyLedgerLines(lines, markGap) {
   }
   return fires.length;
 }
-async function goEv(since, why, stopAt) {   // 받는 동안 live 멈춤(배치 ↔ live 서로 배제 · ble_link.cpp:555-559) → 끝나면 지금부터
-  S.batch = { since: since, why: why, t0: now(), lines: 0, got: [], stop: false, pages: 0 }; setPause(why === "gap" ? "실시간 멈춤(원장 받는 중)" : "실시간 멈춤(해명 받는 중)"); S.liveOn = false;
-  let cur = since, more = 1;
+function evOpenBusy() { if (S.evOpen && now() - S.evOpen.at > EV_OPEN_MAX_MS) S.evOpen = null; return !!S.evOpen; }
+async function goEv(since, why, stopAt) {   // 받는 동안 기기 실시간 멈춤(배치 ↔ live 서로 배제 · ble_link.cpp:555-559) → 끝나면 지금부터(부르는 쪽)
+  if (S.batch) return { busy: "이미 받는 중" };
+  if (evOpenBusy()) { note("기기가 앞 go ev 를 아직 보내는 중 — 새로 안 보냄"); return { busy: "기기 쪽 앞 요청이 아직 안 끝남" }; }
+  S.batch = { since: since, why: why, t0: now(), lines: 0, got: [], stop: false, pages: 0, cur: since, began: false, end: null, clampHead: null };
+  setPause(why === "gap" ? "실시간 멈춤(끊긴 동안 울림 받는 중)" : "실시간 멈춤(해명 받는 중)"); S.liveOn = false;
+  let cur = since, more = 1, fail = null;
   while (more && !S.batch.stop && S.tx) {
-    S.batch.end = null;
-    const r = await cmd("go ev since=" + cur, { expect: (l) => l.startsWith("EVEND|"), timeout: 20000, progress: true });
-    S.batch.pages++;
-    const end = S.batch.end || (r.line ? N.parseEVEND(r.line) : null);
-    if (!r.ok || !end) { note("go ev 끝 줄 없음(" + r.why + ")"); break; }
-    more = end.more; cur = end.last;
-    if (stopAt && stopAt(S.batch.got)) break;
+    const b = S.batch; b.cur = cur; b.began = false; b.end = null; b.clampHead = null;
+    S.evOpen = { since: cur, clamp: null, at: now() };
+    const r = await cmd("go ev since=" + cur, { expect: (l) => { const e = l.startsWith("EVEND|") ? N.parseEVEND(l) : null; return !!(e && evMatch(e.from, b)); }, timeout: S.evWaitMs || EV_WAIT_MS });
+    b.pages++;
+    if (b.clampHead !== null && S.evOpen) S.evOpen.clamp = b.clampHead;
+    if (!r.ok || !b.end) { fail = r.why; note("go ev 끝 줄 없음(" + r.why + ") — 기기 쪽 요청은 아직 열려 있을 수 있음"); break; }
+    more = b.end.more; cur = b.end.last;
+    if (stopAt && stopAt(b.got)) break;
   }
   const b = S.batch; S.batch = null;
   const n = applyLedgerLines(b.got, why === "gap");
-  const rec = { kind: "batch", why: why, since: since, secs: (now() - b.t0) / 1000, lines: b.lines, pages: b.pages, fires: n, stopped: b.stop };
+  const rec = { kind: "batch", why: why, since: since, secs: (now() - b.t0) / 1000, lines: b.lines, pages: b.pages, fires: n, stopped: b.stop, fail: fail, last: cur };
   logLine("batch", "#BATCH " + JSON.stringify(rec)); note("원장 받기(" + why + ") " + rec.lines + " 줄 · " + rec.secs.toFixed(1) + " s · 울림 " + n);
   setPause("");
-  return b;
+  return rec;
 }
 async function liveNow() { await cmd("lseq " + C.LSEQ_NOW); await cmd("live on"); S.liveOn = true; S.firstAfterLive = true; }   // ble_link.cpp:219-225 · 378-384
-/* ---------- 붙을 때마다 차례(B1) ---------- */
+async function fetchExpl(k) {   // [해명 받기] — go ev since=<EV 원장 seq − 1> → 끝나면 지금부터
+  const ev = S.events.get(k); if (!ev || !ev.ledSeq || !S.tx) return;
+  const p = goEv(ev.ledSeq - 1, "expl", (got) => got.some((l) => l.kind === "expl" && l.boot === ev.boot && Math.abs(l.ms - ev.ms) <= 1500));
+  renderSheet(); const r = await p;
+  if (r && r.busy) { ev.explMsg = r.busy; renderSheet(); return; }
+  const e2 = S.events.get(k) || ev; e2.explMsg = r.fail ? "끝 줄 없음(" + r.fail + ") — 기기 쪽 요청이 끝난 뒤 다시 누르세요" : ""; if (!e2.expl && !r.fail) e2.explNone = true; dbPut("events", e2);
+  if (S.tx) await liveNow(); renderSheet();
+}
+async function fetchGap() {     // [끊긴 동안 울림 받기] — go ev since=<끊기기 전 마지막 원장 seq>
+  const since = S.meta.gapSince;
+  if (!S.tx) { $("gapMsg").textContent = "연결 안 됨"; return; }
+  if (!since) { $("gapMsg").textContent = "받을 것 없음(끊긴 뒤 다시 붙은 적 없음 · 처음 쓰는 폰)"; return; }
+  $("gapMsg").textContent = "받는 중… 원장 seq " + since + " 뒤";
+  const r = await goEv(since, "gap");
+  if (r && r.busy) { $("gapMsg").textContent = "못 보냄 — " + r.busy; return; }
+  if (r && !r.fail && !r.stopped) metaSet("gapSince", 0);
+  else if (r && r.last) metaSet("gapSince", r.last);
+  $("gapMsg").textContent = "받음 " + N.hms(now()) + " · " + r.lines + " 줄 · " + r.pages + " 쪽 · " + r.secs.toFixed(1) + " s · 울림 " + r.fires + (r.fail ? " · 끝 줄 없음(" + r.fail + ")" : "") + (r.stopped ? " · 그만 받음" : "");
+  if (S.tx) await liveNow(); renderAll();
+}
+/* ---------- 기기 모드 · B70(설정 · 연결 때마다 · 휘발) ---------- */
+/* mode in|out → OK|mode|<in|out>|mask=0x.. · 다른 값 = ERR|mode|in|out(.ino:2165-2169 · 미설정으로 되돌리는 명령 없음)
+ * set alaggt <값> → OK|set|alaggt|<%.3f>(.ino:2170-2176 · 키 .ino:640 · 기본 .ino:194) · 둘 다 NVS 안 씀(NVS = save 명령의 appSave 하나 · .ino:534 · 2177-2179) */
+const MASK_WANT = { out: 0x0E, in: 0x13 };   // .ino:474-476(g_maskOut · g_maskIn 기본)
+async function applyMode() {
+  const m = S.settings.mode === "in" ? "in" : "out";
+  const r = await cmd("mode " + m, { expect: (l) => /^(OK|ERR)\|mode/.test(l), timeout: 3000 });
+  const mm = r.line ? /mask=0x([0-9A-Fa-f]+)/.exec(r.line) : null;
+  S.modeChk = { want: m, maskWant: MASK_WANT[m], line: r.line || r.why, okReply: !!(r.line && r.line.startsWith("OK|mode|" + m)), maskReply: mm ? parseInt(mm[1], 16) : null, at: now(), statMode: null, maskGot: null, ok: null };
+  renderStatus(); renderSettings();
+}
+function checkMode() {
+  const k = S.modeChk; if (!k || !S.stat || S.statAt < k.at) return;
+  k.statMode = S.stat.mode; k.maskGot = S.stat.mask; k.ok = S.stat.mode === k.want && S.stat.mask === k.maskWant;
+  renderStatus();
+}
+async function applyB70() {
+  const v = S.settings.b70 ? "0.70" : "0.50";
+  const r = await cmd("set alaggt " + v, { expect: (l) => /^(OK|ERR)\|set/.test(l), timeout: 3000 });
+  const okv = r.line && r.line.startsWith("OK|set|alaggt|") ? parseFloat(r.line.split("|")[3]) : null;
+  S.b70Chk = { want: v, line: r.line || r.why, ok: okv !== null && Math.abs(okv - parseFloat(v)) < 1e-6, at: now() };
+  if (S.b70Chk.ok) T.AGG_T = okv;                                                                 // 시각 확인 · 이유 요약의 오래 듣기 셈도 기기에 넣은 값으로(기본 0.50 · core TH.AGG_T)
+  renderSettings();
+}
+async function statNow() { await cmd("stat", { expect: (l) => l.startsWith("ST2|"), timeout: 3000 }); checkMode(); renderSettings(); }
+/* ---------- 붙을 때마다 차례(새 · go ev 는 자동으로 안 함) ---------- */
+/* ver → stat → time → (시험자 모드 설정 켜짐 ∧ 기기 꺼짐이면 tester on) → 모드 → set alaggt(B70) → stat(시험자 · mask 확인) → lseq 4294967295 · live on → rec list → 대기 녹음 받기 */
 async function runConnectSeq() {
   if (S.seqBusy) return; S.seqBusy = true;
   try {
@@ -748,9 +910,15 @@ async function runConnectSeq() {
     await cmd("ver", { expect: (l) => l.startsWith("VER|"), timeout: 2500 });
     await cmd("stat", { expect: (l) => l.startsWith("ST2|"), timeout: 3000 });
     if (S.settings.timeSync) await cmd("time " + now());                                         // ble_link.cpp:195-197 · 응답 없음
-    if (S.settings.tester && S.st2 && S.st2.tester === 0) await cmd("tester on", { expect: (l) => /^(OK|ERR)\|tester/.test(l), timeout: 3000 });
+    if (S.settings.tester && S.st2 && S.st2.tester === 0) {
+      const r = await cmd("tester on", { expect: (l) => /^(OK|ERR)\|tester/.test(l), timeout: 3000 });
+      if (r.ok && r.line && r.line.startsWith("OK|tester|on")) { S.st2.tester = 1; S.testerKnown = { v: 1, src: "OK", at: now() }; }   // ★v2.1 — OK 면 켜짐으로 두고 아래 stat 으로 다시 확인
+    }
+    await applyMode();
+    await applyB70();
+    await statNow();                                                                             // ★시험자 · mask 확인
     const since = Math.max(prevEv, prevLed);
-    if (hadAny && since > 0) await goEv(since, "gap");                                            // 처음 쓰는 폰(기준 seq 없음)은 안 함
+    if (hadAny && since > 0) metaSet("gapSince", S.meta.gapSince ? Math.min(S.meta.gapSince, since) : since);   // ★끊긴 동안 울림은 [끊긴 동안 울림 받기] 로만
     if (S.stat && S.stat.led) metaSet("lastStatLed", S.stat.led);
     metaSet("everConnected", true);
     await liveNow();
@@ -765,9 +933,9 @@ function onREC(line, rx) {
     const st = r.type === "ready" ? "ready" : r.state;
     let m = S.recs.get(S.boot + "_" + r.id);
     if (!m) { m = { k: S.boot + "_" + r.id, boot: S.boot, id: r.id, state: "", day: N.dayOf(rx), exp: 0, created: rx }; S.recs.set(m.k, m); }
-    if (m.state !== "받음") { m.devState = st; m.t = r.t; m.ms0 = r.ms0 || m.ms0; m.ms1 = r.ms1 || m.ms1; m.crcLine = r.crc || m.crcLine; m.manual = r.manual; m.off = r.off; m.state = (st === "ready" || st === "send") ? "기기에 대기" : "기기에서 만드는 중"; }
+    if (m.state !== "받음" && m.state !== "받는 중") { m.devState = st; m.t = r.t; m.ms0 = r.ms0 || m.ms0; m.ms1 = r.ms1 || m.ms1; m.crcLine = r.crc || m.crcLine; m.manual = r.manual; m.off = r.off; m.state = (st === "ready" || st === "send") ? "기기에 대기" : "기기에서 만드는 중"; }
     linkRecToEvent(m); dbPut("recs", m); renderRecs();
-    if (r.type === "ready" && S.settings.autoRec && !S.batch) recPending();
+    if (r.type === "ready" && S.settings.autoRec) recPending();                                    // ★v2.1 — 원장 받는 중이어도 녹음 먼저(기기 칸 2 개를 오래 쥐지 않게)
   } else if (r.type === "end" || r.type === "abort") {
     if (S.rec && S.rec.id === r.id) { S.rec.end = r; if (r.type === "end") S.rec.crcLine = r.crc; }
   } else if (r.type === "sum") {
@@ -784,21 +952,28 @@ function linkRecToEvent(m) {
   if (m.t === null || m.t === undefined) return;
   let best = null, bd = 1e9;
   for (const e of S.events.values()) { if (e.boot !== m.boot || e.gap) continue; const d = Math.abs(e.ms - m.t); if (d < bd) { bd = d; best = e; } }
-  if (best && bd <= 1500) { best.rec = m.k; best.recState = m.state; dbPut("events", best); renderEvents(); }
+  if (best && bd <= 1500) { best.rec = m.k; best.recState = m.state; dbPut("events", best); }
   for (const x of S.misses) if (x.recId === m.id && x.recBoot === m.boot) { x.recState = m.state; x.rec = m.k; dbPut("misses", x); }
+  renderRecLive();
+}
+function renderRecLive() {   // ★v2.1 — 녹음 상태가 받는 대로(판정 창 · 놓침 목록이 열려 있어도)
+  renderEvents();                                                                               // 놓침 목록도 함께(renderEvents → renderMissList)
+  if (S.sheetKey) { const ev = S.events.get(S.sheetKey); if (ev && ev.rec) renderSheetRec(ev); }
+  if (S.missDraft && $("missPage").classList.contains("open")) renderMissRec();
 }
 async function recPending() {
   if (S.rec || !S.tx) return;
-  const list = Array.from(S.recs.values()).filter((m) => m.boot === S.boot && m.state === "기기에 대기");
-  for (const m of list) { if (!S.tx) break; await recFetch(m); }
+  const list = Array.from(S.recs.values()).filter((m) => m.boot === S.boot && m.state === "기기에 대기" && !(m.retryAfter && m.retryAfter > now()));
+  if (list.length) await recFetch(list[0]);                                                     // 끝나면 recFetch 가 다시 recPending(다음 것)
 }
-async function recFetch(m, tries) {   // rec get <id> [from=<off>] → AUD 조립 · 검사 · wav + 메타 · rec ack
+function recAfter() { setTimeout(() => { if (S.settings.autoRec) recPending(); }, 0); }        // ★v2.1 — 하나 받으면(또는 실패하면) 기기에 대기 중인 다음 녹음 바로
+async function recFetch(m, tries) {   // rec get <id> [from=<off>] → AUD 조립 · 검사 · wav + 메타 · rec ack(줄 서지 않고 바로 · 원장 받는 중에도)
   tries = tries || 0; if (S.rec && S.rec.id !== m.id) return;
   if (!S.rec) S.rec = { id: m.id, k: m.k, asm: S.recParts[m.k] || new N.Assembler(m.id), t0: now(), end: null, lastProg: now(), lastN: 0 };   // ★끊겨도 받은 조각은 남겨 이어받기
   const R = S.rec; R.end = null; R.disc = false;
   const off = R.asm.prefix();
-  const r = await cmd("rec get " + m.id + (off ? " from=" + off : ""), { expect: (l) => l.startsWith("OK|rec|get|" + m.id + "|") || l.startsWith("ERR|rec"), timeout: 3000 });
-  if (!r.ok || !r.line || r.line.startsWith("ERR")) { m.state = "받기 실패 " + (r.line || r.why); dbPut("recs", m); S.rec = null; renderRecs(); return; }
+  const line = await sendNowRetry("rec get " + m.id + (off ? " from=" + off : ""), (l) => l.startsWith("OK|rec|get|" + m.id + "|") || l.startsWith("ERR|rec"), 3000);
+  if (!line || line.writeFail || line.startsWith("ERR")) { m.state = "받기 실패 " + (line && !line.writeFail ? line : (line && line.why) || "응답 없음"); dbPut("recs", m); S.rec = null; clearRecProg(); renderRecs(); renderRecLive(); recAfter(); return; }
   m.state = "받는 중"; renderRecs(); linkRecToEvent(m);
   await new Promise((res) => {
     const tm = setInterval(() => {
@@ -810,11 +985,13 @@ async function recFetch(m, tries) {   // rec get <id> [from=<off>] → AUD 조�
   });
   if (R.asm.prefix() < C.REC.TOTAL) {
     if (tries < 3 && S.tx && !R.disc) return recFetch(m, tries + 1);        // 이어받기 = rec get <id> from=<접두>(rec10.cpp:381-383)
-    S.recParts[m.k] = R.asm; m.partial = R.asm.prefix(); m.state = "기기에 대기"; m.note = "덜 받음 " + m.partial + " B — 다시 붙으면 from=" + m.partial + " 로 이어받음"; dbPut("recs", m); S.rec = null; renderRecs(); return;
+    S.recParts[m.k] = R.asm; m.partial = R.asm.prefix(); m.state = "기기에 대기"; m.note = "덜 받음 " + m.partial + " B — 다시 붙으면 from=" + m.partial + " 로 이어받음";
+    if (!R.disc) { m.retryAfter = now() + 10000; setTimeout(recAfter, 10500); }
+    dbPut("recs", m); S.rec = null; clearRecProg(); renderRecs(); renderRecLive(); recAfter(); return;
   }
   delete S.recParts[m.k];
   const blob = R.asm.blob(); const chk = N.recCheck(blob, R.crcLine || m.crcLine);
-  if (!chk.ok) { m.state = "검사 실패(" + (chk.crc_ok ? "" : "CRC ") + (chk.samples_ok ? "" : "표본 ") + ")"; m.check = chk; delete m.check.header; dbPut("recs", m); S.rec = null; renderRecs(); return; }
+  if (!chk.ok) { m.state = "검사 실패(" + (chk.crc_ok ? "" : "CRC ") + (chk.samples_ok ? "" : "표본 ") + ")"; m.check = chk; delete m.check.header; dbPut("recs", m); S.rec = null; clearRecProg(); renderRecs(); renderRecLive(); recAfter(); return; }
   const h = chk.header; const wav = N.wavBytes(blob.subarray(C.REC.HDR, C.REC.HDR + C.REC.PCM));
   const meta = { boot: h.boot, id: h.id, fw: h.fw, flags: h.flag_names, trig: h.trig, ms0: h.ms0, ms1: h.ms1, abs0: h.abs0, abs1: h.abs1, gap_total: h.gap_total, ovf_in: h.ovf_in, short_in: h.short_in,
     live_n: h.live_n, mode: h.mode, mask: h.mask, sens: h.sens, crc: chk.crc_pc, crc_line_ok: chk.crc_line_ok, gaps_zero: chk.gaps_zero, time_ok: chk.time_ok, dur_ms: chk.dur_ms,
@@ -822,34 +999,46 @@ async function recFetch(m, tries) {   // rec get <id> [from=<off>] → AUD 조�
   const oldK = m.k; m.k = h.boot + "_" + h.id; m.boot = h.boot; m.state = "받음";
   if (oldK !== m.k) { S.recs.delete(oldK); dbDel("recs", [oldK]); } m.meta = meta; m.pct = 100; m.t0 = meta.t_phone0; m.file = "rec_" + h.boot + "_" + h.id + ".wav";
   S.recs.set(m.k, m); dbPut("recs", m); dbPut("recwav", { k: m.k, wav: new Blob([wav], { type: "audio/wav" }) }); await dbFlush();
-  S.rec = null; linkRecToEvent(m); renderRecs();
-  await cmd("rec ack " + h.id, { expect: (l) => l.startsWith("OK|rec|ack|") || l.startsWith("ERR|rec"), timeout: 3000 });
+  S.rec = null; clearRecProg(); linkRecToEvent(m); renderRecs();
+  await sendNowRetry("rec ack " + h.id, (l) => l.startsWith("OK|rec|ack|") || l.startsWith("ERR|rec"), 3000);
+  recAfter();
 }
 async function recNow() {   // [지금 10초 받기] = rec(rec10.cpp:354)
   if (!S.tx) { note("연결 안 됨"); return; }
-  const r = await cmd("rec", { expect: (l) => /^OK\|rec\|\d+\|/.test(l) || l.startsWith("ERR|rec"), timeout: 3000 });
-  if (r.line && r.line.startsWith("ERR")) { S.lastRecErr = { why: r.line.split("|")[2], at: now() }; } else S.lastRecErr = null;
+  const line = await sendNowRetry("rec", (l) => /^OK\|rec\|\d+\|/.test(l) || l.startsWith("ERR|rec"), 3000);
+  if (line && !line.writeFail && line.startsWith("ERR")) { S.lastRecErr = { why: line.split("|")[2], at: now() }; } else S.lastRecErr = null;
   renderRecs();
 }
-/* ---------- 놓침 신고(B7) ---------- */
+/* ---------- 놓침 신고(B7) — ★v2.1 누르는 순간 기록 하나를 바로 저장 · [저장] = 같은 기록 고침 ---------- */
+function testerOffConfirmed() { return !!(S.testerKnown && S.testerKnown.src === "ST2" && S.testerKnown.v === 0); }
 async function missStart() {
-  const press = now(); const d = { id: "m" + press, press: press, day: N.dayOf(press), when: "now", t: press, sound: "", dist: "", place: "", real: "", memo: "", recState: "", savedAt: null, hist: [] };
-  S.missDraft = d; openFull("missPage"); renderMiss();
-  if (S.tx && S.st2 && S.st2.tester === 1) {                                     // 시험자 모드 = 누른 순간 바로 rec(앞 5 s + 뒤 5 s · T = BLE 받은 순간 rec10.h:4)
-    d.recState = "rec 보냄";
-    const line = await sendNow("rec", (l) => /^OK\|rec\|\d+\|/.test(l) || l.startsWith("ERR|rec|"), 3000);
-    if (line && line.startsWith("OK|rec|")) { const p = line.split("|"); d.recId = +p[2]; d.recBoot = S.boot; d.recState = p[3] === "merged" ? "앞 녹음에 합침" : "기기에서 만드는 중"; }
-    else d.recState = line ? "녹음 안 됨(" + line.split("|")[2] + ")" : "응답 없음";
-  } else d.recState = S.tx ? "시험자 모드 꺼짐 — 녹음 없음" : "연결 안 됨 — 녹음 없음";
-  renderMiss();
+  const press = now();
+  const d = { id: "m" + press, press: press, day: N.dayOf(press), when: "now", t: press, sound: "", dist: "", place: "", real: "", memo: "", recState: "", savedAt: press, detail: false, hist: [] };
+  S.misses.push(d); walAdd(d); missPut(d);                                                       // ★새로고침해도 남음(앞서 적기 + 바로 쓰기)
+  missOpen(d); $("missTime").value = ""; renderMissList();
+  if (S.tx && !testerOffConfirmed()) {                                                           // 시험자 모드 = 누른 순간 바로 rec(앞 5 s + 뒤 5 s · T = BLE 받은 순간 rec10.h:4)
+    d.recState = "rec 보냄"; renderMissRec();
+    const line = await sendNowRetry("rec", (l) => /^OK\|rec\|\d+\|/.test(l) || l.startsWith("ERR|rec|"), 3000);
+    if (line && !line.writeFail && line.startsWith("OK|rec|")) { const p = line.split("|"); d.recId = +p[2]; d.recBoot = S.boot; d.recState = p[3] === "merged" ? "앞 녹음에 합침" : "기기에서 만드는 중"; }
+    else if (line && !line.writeFail) { const why = line.split("|")[2]; d.recState = "녹음 안 됨(" + why + (why === "tester" ? " · 기기 시험자 모드 꺼짐" : "") + ")"; }
+    else d.recState = line && line.writeFail ? "rec 쓰기 실패(두 번)" : "응답 없음";
+  } else d.recState = S.tx ? "시험자 모드 꺼짐(기기 ST2 확인) — 녹음 없음" : "연결 안 됨 — 녹음 없음";
+  missPut(d); renderMissRec(); renderMissList();
 }
+/* 고르는 동안은 사본(S.missDraft)만 바뀜 — [저장]해야 저장된 기록(S.misses)을 고침 · [뒤로]면 그대로 */
+function missOpen(m) {
+  S.missDraft = { id: m.id, when: m.when || "now", sound: m.sound || "", dist: m.dist || "", place: m.place || "", real: m.real || "" };
+  $("missMemo").value = m.memo || ""; $("missErr").textContent = ""; openFull("missPage"); renderMiss();
+}
+function missEdit(id) { const m = S.misses.find((x) => x.id === id); if (m) missOpen(m); }
 function missSave() {
-  const d = S.missDraft; if (!d) return;
+  const d = S.missDraft; if (!d) return; const m = S.misses.find((x) => x.id === d.id); if (!m) return;
   const off = { now: 0, s10: 10000, s30: 30000, s40: 40000 }[d.when];
-  if (d.when === "custom") { const t = N.parseHHMMSS($("missTime").value, d.press); if (t === null) { $("missErr").textContent = "시각은 숫자 6 개(HHMMSS) 또는 HH:MM:SS"; return; } d.t = t; } else d.t = d.press - (off || 0);
-  d.memo = $("missMemo").value; if (d.savedAt) d.hist.push({ at: now(), prev: JSON.stringify({ when: d.when, t: d.t, sound: d.sound, dist: d.dist, place: d.place, real: d.real, memo: d.memo }) });
-  d.savedAt = now(); const i = S.misses.findIndex((x) => x.id === d.id); if (i >= 0) S.misses[i] = d; else S.misses.push(d);
-  dbPut("misses", d); dbFlush(); renderEvents(); closeFull("missPage"); openTimeCheck(d.t, d);
+  let t = m.press - (off || 0);
+  if (d.when === "custom") { t = N.parseHHMMSS($("missTime").value, m.press); if (t === null) { $("missErr").textContent = "시각은 숫자 6 개(HHMMSS) 또는 HH:MM:SS"; return; } }
+  if (m.detail) m.hist = (m.hist || []).concat([{ at: now(), prev: JSON.stringify({ when: m.when, t: m.t, sound: m.sound, dist: m.dist, place: m.place, real: m.real, memo: m.memo }) }]);
+  m.when = d.when; m.t = t; m.sound = d.sound; m.dist = d.dist; m.place = d.place; m.real = d.real; m.memo = $("missMemo").value; m.detail = true; m.savedAt = now();
+  missPut(m); renderEvents(); closeFull("missPage"); openTimeCheck(m.t, m);
 }
 /* ---------- 시각 확인(B9) ---------- */
 async function slicesAround(t, preMs, postMs) {   // 그 시각의 부팅 · 41 B(메모리 링 → 없으면 IndexedDB)
@@ -914,30 +1103,37 @@ function drawGraph(cv, sl, centerMs, ev) {
   g.strokeStyle = "#1A1C1E"; g.lineWidth = 2; g.beginPath(); g.moveTo(x(centerMs), 10); g.lineTo(x(centerMs), H - 20); g.stroke();
   g.fillStyle = "#1A1C1E"; g.font = "18px sans-serif"; g.fillText(ev ? "울린 순간" : "그 시각", x(centerMs) + 4, 24); g.fillText("−5 s", 30, H - 2); g.fillText("+5 s", W - 50, H - 2);
 }
-/* ---------- 판정 창(B6) ---------- */
+/* ---------- 판정 창(B6) — ★v2.1 열어도 go ev 안 보냄 · [해명 받기] 단추 · 머리(판정 · 닫기) 고정 · 저장하면 닫힘 ---------- */
 async function openSheet(k) {
   const ev = S.events.get(k); if (!ev) return; S.sheetKey = k;
   S.judge = ev.judge ? JSON.parse(JSON.stringify(ev.judge)) : { main: null, sub: [], car: false, memo: "" };
-  $("sheet").classList.add("open"); renderSheet();
-  if (!ev.expl && ev.ledSeq && S.tx && !S.batch) {                              // 판정 창을 열 때 해명 받기: go ev since=<EV 원장 seq − 1>(ble_link.cpp:210-212)
-    await goEv(ev.ledSeq - 1, "expl", (got) => got.some((l) => l.kind === "expl" && l.boot === ev.boot && Math.abs(l.ms - ev.ms) <= 1500));
-    const e2 = S.events.get(k); if (e2 && !e2.expl) e2.explNone = true;
-    await liveNow(); renderSheet();
-  }
+  $("shErr").textContent = ""; $("sheet").classList.add("open"); $("sheet").scrollTop = 0; renderSheet();
 }
+function closeSheet() { $("sheet").classList.remove("open"); S.sheetKey = null; }
 async function evSlices(ev) {
   let sl = S.ring.filter((r) => r.boot === ev.boot && Math.abs(r.ms - ev.ms) <= 5250);
   if (sl.length < 20) { await dbFlush(); const rows = await dbAll("srec", "bootMs", IDBKeyRange.bound([ev.boot, ev.ms - 5250], [ev.boot, ev.ms + 5250])); sl = rows.map((x) => N.parseS("S|" + x.seq + "|" + x.boot + "|" + x.ms + "|" + x.b64)).filter(Boolean).sort((a, b) => a.seq - b.seq); }
   return sl;
 }
+function explHtml(ev) {
+  if (ev.expl) return '<span class="expl">' + esc(ev.expl) + "</span>";
+  if (S.batch && S.batch.why === "expl") return "받는 중…(받는 동안 실시간 멈춤)";
+  if (!ev.ledSeq) return "EV 원장 seq 없음 — 못 받음";
+  const why = ev.explMsg ? " · " + esc(ev.explMsg) : (ev.explNone ? " · 원장에 해명 줄 없음" : "");
+  return '<button class="sm sec" data-expl="' + esc(ev.k) + '"' + (S.tx && !S.batch ? "" : " disabled") + '>해명 받기</button> <span class="note">받는 동안 1~2 분 실시간 멈춤</span>' + why;
+}
+function renderSheetRec(ev) {
+  const el = $("shRec"); if (!el) return; const rec = ev.rec ? S.recs.get(ev.rec) : null;
+  el.innerHTML = "<b>녹음</b> " + esc(rec ? rec.state + (rec.pct && rec.state === "받는 중" ? " " + rec.pct + " %" : "") : (ev.recState || "없음")) + (rec && rec.state === "받음" ? ' <button class="sm" data-play="' + esc(rec.k) + '">재생</button>' : "");
+}
 async function renderSheet() {
   const ev = S.events.get(S.sheetKey); if (!ev) return; const J = S.judge;
-  const rec = ev.rec ? S.recs.get(ev.rec) : null;
   $("shHead").innerHTML = '<div class="shT">' + esc(N.hms(ev.t)) + " · " + esc(C.KIND_NAME[ev.kind] || "기타") + (ev.grade ? " · " + esc(GRADE[ev.grade] || ev.grade) : "") + (ev.gap ? ' <i class="tag">끊겨 있던 동안</i>' : "") + "</div>" +
     '<div class="kv">점수 h ' + (ev.h !== undefined && ev.h !== null ? Number(ev.h).toFixed(3) : "?") + (ev.alarm !== undefined && ev.alarm !== null ? " · p_alarm " + Number(ev.alarm).toFixed(2) : "") + " · 크기 " + (ev.dBA !== undefined ? ev.dBA : "?") + " dB(A)" + (ev.L !== undefined ? " · L " + ev.L : "") + "</div>" +
     '<div class="kv"><b>이유</b> ' + esc(ev.reason || "") + "</div>" +
-    '<div class="kv"><b>해명</b> ' + (ev.expl ? '<span class="expl">' + esc(ev.expl) + "</span>" : (S.batch && S.batch.why === "expl" ? "받는 중…" : (ev.explNone ? "원장에 해명 줄 없음" : (ev.ledSeq ? "아직 없음" : "EV 원장 seq 없음 — 못 받음")))) + "</div>" +
-    '<div class="kv"><b>녹음</b> ' + esc(rec ? rec.state + (rec.pct && rec.state === "받는 중" ? " " + rec.pct + " %" : "") : (ev.recState || "없음")) + (rec && rec.state === "받음" ? ' <button class="sm" data-play="' + esc(rec.k) + '">재생</button>' : "") + "</div>";
+    '<div class="kv"><b>해명</b> ' + explHtml(ev) + "</div>" +
+    '<div class="kv" id="shRec"></div>';
+  renderSheetRec(ev);
   const sl = await evSlices(ev); drawGraph($("shCanvas"), sl, ev.ms, ev);
   const mains = ["TP", "FP1", "FP2", "UNK"];
   $("shMain").innerHTML = mains.map((m) => '<button class="jb j' + m + (J.main === m ? " on" : "") + '" data-main="' + m + '">' + ({ TP: "정탐<small>맞게 울림</small>", FP1: "오탐①<small>울리면 안 되는 소리</small>", FP2: "오탐②<small>종류를 잘못 앎</small>", UNK: "모르겠음" }[m]) + "</button>").join("");
@@ -950,25 +1146,33 @@ function saveJudge() {
   const ev = S.events.get(S.sheetKey); if (!ev || !S.judge.main) { $("shErr").textContent = "큰 단추 하나를 고르세요"; return; }
   S.judge.car = $("shCar").checked; S.judge.memo = $("shMemo").value;
   if (ev.judge) ev.hist.push({ at: now(), prev: ev.judge });
-  ev.judge = Object.assign({}, S.judge, { savedAt: now() }); dbPut("events", ev); dbFlush(); $("shErr").textContent = "";
-  renderSheet(); renderEvents();
+  ev.judge = Object.assign({}, S.judge, { savedAt: now() }); dbPutNow("events", ev); $("shErr").textContent = "";
+  closeSheet(); renderEvents();                                                                  // ★v2.1 — 저장하면 창 닫힘
 }
 /* ---------- 화면 ---------- */
 function setConn(st, msg) { S.conn = st; if (msg) note(msg); renderStatus(); }
 function setPause(w) { S.pausedWhy = w; renderStatus(); }
+const MODE_KO = { out: "실외", in: "실내", unset: "미설정" };
+const hx2 = (n) => "0x" + ("0" + (n >>> 0).toString(16).toUpperCase()).slice(-2);
 function renderStatus() {
   const c = $("stConn"); if (!c) return;
   c.textContent = S.conn; c.className = "pill " + (S.conn === "연결됨" ? "pon" : S.conn === "끊김" ? "poff" : "pwait");
-  $("btnConn").style.display = S.conn === "연결됨" ? "none" : ""; $("btnConn").textContent = S.dev && S.wantConn ? "다시 붙는 중…" : "연결";
+  $("btnConn").style.display = S.conn === "연결됨" ? "none" : ""; $("btnConn").textContent = S.dev && S.wantConn ? (S.connecting ? "붙는 중…" : "다시 붙기") : "연결";
+  const md = S.stat ? S.stat.mode : null; const mk = S.modeChk;
+  $("stMode").textContent = md ? (MODE_KO[md] || md) + (mk && mk.ok === false ? " ?" : "") : "모드 ?";
+  $("stMode").className = "pill " + (!md ? "" : (mk && mk.ok === false) ? "pwarn" : (md === "unset" ? "pwait" : "pon"));
   const bad = S.micBad.some((x) => x); $("stMic").textContent = "마이크 " + (S.latest ? (bad ? "이상" : "정상") : "?"); $("stMic").className = "pill " + (bad ? "pwarn" : "pon");
   const L = S.latest; const lag = L && L.t ? now() - L.t : null;
   $("stData").textContent = L ? "자료 " + N.hms(L.t) + " · 차 " + (lag / 1000).toFixed(1) + " s" : "자료 없음";
   const live = lag !== null && lag < 3000 && now() - S.latestRx < 3000;
   $("stLive").textContent = S.pausedWhy || (L ? (live ? "실시간" : "밀림") : "—"); $("stLive").className = "pill " + (S.pausedWhy ? "pwarn" : live ? "pon" : (L ? "pwarn" : "poff"));
+  $("btnNow").style.display = (S.tx && L && !live && !S.pausedWhy && !S.batch) ? "" : "none";       // ★v2.1 — '밀림'(차 ≥ 3 s)일 때만
   const day = N.dayOf(now()); const R = S.ranges.filter((r) => N.dayOf(r[0]) === day); const gapsN = S.gaps.filter((g) => g.day === day).length;
-  $("stRange").textContent = R.length ? "오늘 " + N.hms(R[0][0]) + "~" + N.hms(R[R.length - 1][1]) + " · 빈 곳 " + Math.max(R.length - 1, gapsN) : "오늘 받은 것 없음";
+  $("stRange").textContent = (S.dbBlocked || S.dbWaiting) ? "★저장소 여는 중(옛 판 창이 잡고 있음 · 10 초쯤) — 다른 NOKK 창을 닫아 주세요" : S.dbClosed ? "★다른 창이 새 판을 엶 — 이 창은 저장 안 함(새로고침)" :
+    (R.length ? "오늘 " + N.hms(R[0][0]) + "~" + N.hms(R[R.length - 1][1]) + " · 빈 곳 " + Math.max(R.length - 1, gapsN) : "오늘 받은 것 없음");
   $("btnStop").style.display = S.batch ? "" : "none";
   $("stBoot").textContent = S.boot !== null ? "boot " + S.boot + (S.meta.rebootAt ? " · 재부팅 " + N.hms(S.meta.rebootAt) : "") : "boot ?";
+  const bg = $("btnGap"); if (bg) bg.disabled = !S.tx || !!S.batch;
 }
 function renderLive() {
   const r = S.latest; if (!r) return;
@@ -980,12 +1184,13 @@ function renderRecs() {
   const el = $("recList"); if (!el) return;
   const rs = Array.from(S.recs.values()).sort((a, b) => (b.created || 0) - (a.created || 0));
   el.innerHTML = rs.length ? rs.map((m) => '<div class="rec"><span>#' + m.id + " · boot " + m.boot + " · " + esc(m.t0 ? N.hms(m.t0) : (m.t !== undefined ? "기기 ms " + m.t : "")) + "</span><span>" + esc(m.state) + (m.state === "받는 중" ? " " + (m.pct || 0) + " %" : "") + "</span>" + (m.state === "받음" ? '<button class="sm" data-play="' + esc(m.k) + '">재생</button>' : (m.state.indexOf("기기에 대기") === 0 ? '<button class="sm" data-get="' + esc(m.k) + '">받기</button>' : "")) + "</div>").join("") : '<div class="muted">녹음 없음</div>';
-  $("recSlots").textContent = "기기 대기 칸 " + (S.st2 ? S.st2.rec : "?") + "/2" + (S.recLastSum ? " · 버린 자동 녹음 " + S.recLastSum.drop : "") + " · 시험자 모드 " + (S.st2 ? (S.st2.tester ? "켜짐" : "꺼짐") : "?");
+  $("recSlots").textContent = "기기 대기 칸 " + (S.st2 ? S.st2.rec : "?") + "/2" + (S.testerKnown && S.testerKnown.src === "ST2" ? "(" + N.hms(S.testerKnown.at) + " stat 때)" : "") + (S.recLastSum ? " · 버린 자동 녹음 " + S.recLastSum.drop : "") + " · 시험자 모드 " + (S.st2 ? (S.st2.tester ? "켜짐" : "꺼짐") : "?");
   $("recErr").textContent = S.lastRecErr ? "마지막 rec: " + ({ full: "ERR|rec|full(칸 가득)", early: "ERR|rec|early(앞 5 초 없음)", tester: "ERR|rec|tester(시험자 모드 꺼짐)", off: "ERR|rec|off" }[S.lastRecErr.why] || S.lastRecErr.why) + " " + N.hms(S.lastRecErr.at) : "";
 }
+function clearRecProg() { const e = $("recProg"); if (e) e.textContent = ""; }                    // ★v2.1 — 받기를 마치면 진행 글 지움
 function renderRecProg(m) {
   const e = $("recProg"); if (e) e.textContent = "받는 중 #" + m.id + " · " + (m.pct || 0) + " %" + (m.eta ? " · 남은 " + Math.round(m.eta) + " s" : "");
-  if (!S._recProgAt || now() - S._recProgAt > 1000) { S._recProgAt = now(); renderRecs(); for (const ev of S.events.values()) if (ev.rec === m.k && ev.recState !== "받는 중 " + (m.pct || 0) + " %") { ev.recState = "받는 중 " + (m.pct || 0) + " %"; } renderEvents(); }
+  if (!S._recProgAt || now() - S._recProgAt > 1000) { S._recProgAt = now(); renderRecs(); for (const ev of S.events.values()) if (ev.rec === m.k) ev.recState = "받는 중 " + (m.pct || 0) + " %"; renderRecLive(); }
 }
 function renderMiss() {
   const d = S.missDraft; if (!d) return;
@@ -996,7 +1201,11 @@ function renderMiss() {
   $("missDist").innerHTML = opt("dist", [["가까움", "가까움"], ["중간", "중간"], ["멂", "멂"]], d.dist);
   $("missPlace").innerHTML = opt("place", [["실외", "실외"], ["실내", "실내"], ["차 안", "차 안"]], d.place);
   $("missReal").innerHTML = opt("real", [["진짜 상황", "진짜 상황"], ["시험(내가 울림)", "시험(내가 울림)"]], d.real);
-  $("missRec").textContent = "녹음: " + (d.recState || "") + " · 누른 시각 " + N.hms(d.press);
+  renderMissRec();
+}
+function renderMissRec() {   // 녹음 줄만(단추는 다시 그리지 않음 — 받는 동안 1 s 마다 불려도 고르던 손이 빗나가지 않게)
+  const d = S.missDraft; if (!d) return; const m = S.misses.find((x) => x.id === d.id); if (!m) return;
+  $("missRec").textContent = "녹음: " + missRecState(m) + " · 누른 시각 " + N.hms(m.press) + (m.detail ? " · 자세히 저장 " + N.hms(m.savedAt) : " · 자세히 아직");
 }
 function renderLog() {
   const el = $("logBar"); if (!el) return; const day = N.dayOf(now());
@@ -1005,16 +1214,30 @@ function renderLog() {
   const ev = Array.from(S.events.values()).filter((e) => e.day === day);
   $("logCounts").textContent = "오늘 울림 " + ev.length + " · 판정 " + ev.filter((e) => e.judge).length + " · 놓침 " + S.misses.filter((m) => m.day === day).length + " · 녹음 " + Array.from(S.recs.values()).filter((m) => m.state === "받음" && m.day === day).length + " · 빈 곳 " + S.gaps.filter((g) => g.day === day).length;
   if (navigator.storage && navigator.storage.estimate) navigator.storage.estimate().then((e) => { $("logStore").textContent = "저장량 " + (e.usage / 1048576).toFixed(1) + " MB / " + (e.quota / 1048576 / 1024).toFixed(1) + " GB"; }).catch(() => {});
+  const gm = $("gapMsg"); if (gm && !gm.textContent) gm.textContent = S.meta.gapSince ? "받을 것: 원장 seq " + S.meta.gapSince + " 뒤(끊겼다 다시 붙음)" : "받을 것 없음";
 }
 function renderSettings() {
-  const el = $("setBody"); if (!el) return; const st = S.stat, st2 = S.st2, v = S.ver;
+  const el = $("setBody"); if (!el) return; const st = S.stat, st2 = S.st2, v = S.ver, mk = S.modeChk, bk = S.b70Chk;
   const tg = (k, label) => '<button class="tog' + (S.settings[k] ? " on" : "") + '" data-set="' + k + '">' + esc(label) + " · " + (S.settings[k] ? "켜짐" : "꺼짐") + "</button>";
-  el.innerHTML = tg("tester", "시험자 모드(기기에 저장 · tester on/off)") + '<div class="small">기기 상태(ST2): ' + (st2 ? (st2.tester ? "시험자 모드 켜짐" : "꺼짐") + " · 녹음 칸 " + st2.rec + "/2" : "모름") + "</div>" +
+  const modeLine = mk ? "기기 응답 " + esc(mk.line) + (mk.ok === true ? " · stat mode " + esc(mk.statMode) + " · mask " + hx2(mk.maskGot) + " = 기대 " + hx2(mk.maskWant) + " 맞음" :
+    mk.ok === false ? " · ★stat mode " + esc(mk.statMode) + " · mask " + (mk.maskGot !== null ? hx2(mk.maskGot) : "?") + "(기대 " + esc(MODE_KO[mk.want]) + " " + hx2(mk.maskWant) + ") 다름" : " · stat 확인 전") : "아직 안 보냄";
+  const b70Line = bk ? "기기 응답 " + esc(bk.line) + (bk.ok ? " — 응답만(그 값을 넣었다는 응답 · 지금 값을 읽는 명령은 기기에 없음)" : " — ★응답이 보낸 값과 다르거나 없음") : "아직 안 보냄";
+  el.innerHTML =
+    '<div class="kv"><b>페이지 판</b> ' + esc(C.PAGE_VER) + (S.dbMig ? " · 저장소 판 " + S.dbMig.from + " → " + S.dbMig.to + "(원문 줄 " + S.dbMig.lines + " 옮김)" : "") + "</div>" +   // 맨 위 — 새 판인지 바로 보이게
+    "<h3>기기 모드</h3>" +
+    '<div class="seg"><button data-mode="out" class="' + (S.settings.mode !== "in" ? "on" : "") + '">실외</button><button data-mode="in" class="' + (S.settings.mode === "in" ? "on" : "") + '">실내</button></div>' +
+    '<div class="small">연결할 때마다 고른 모드를 기기에 보냄(mode out|in · 휘발 · 기기 재부팅하면 미설정). 실외 = 경보음 · 화재 축 꺼짐(mask 0x0E) · 실내 = 경적 · 큰소리 축 꺼짐(0x13). 미설정으로 되돌리는 명령은 기기에 없어 고를 수 없음.</div>' +
+    '<div class="kv">' + modeLine + "</div>" +
+    "<h3>경보음 엄격(B70)</h3>" + tg("b70", "경보음 엄격(B70 · 오래 듣기 문턱 0.70)") +
+    '<div class="small">켜짐 = 연결할 때마다 set alaggt 0.70 · 꺼짐 = 0.50(기기 기본) · 휘발(재부팅하면 0.50)</div>' +
+    '<div class="kv">' + b70Line + "</div>" +
+    "<h3>그 밖</h3>" +
+    tg("tester", "시험자 모드(기기에 저장 · tester on/off)") + '<div class="small">기기 상태(ST2): ' + (st2 ? (st2.tester ? "시험자 모드 켜짐" : "꺼짐") + " · 녹음 칸 " + st2.rec + "/2" : "모름") + "</div>" +
     tg("autoRec", "녹음 자동 받기") + tg("timeSync", "기기 시각 맞추기(연결 때 time)") + tg("wake", "화면 켜 두기") +
     '<button class="sec" id="btnDisc">연결 끊기(live off)</button>' +
     '<div class="kv"><b>기기 판</b> ' + esc(v ? v.fw + " · " + v.date + " · proto " + v.proto : "모름") + "</div>" +
-    '<div class="kv"><b>기기 모드(보기만)</b> ' + esc(st ? "mode " + st.mode + " · mask 0x" + (st.mask !== null ? st.mask.toString(16).toUpperCase() : "?") + " · 민감도 " + st.sens + " · 켜진 지 " + st.up + " s · 원장 " + st.led : "모름") + "</div>" +
-    '<div class="kv"><b>페이지 판</b> ' + esc(C.PAGE_VER) + "</div><pre id=\"cmdlog\" class=\"log\"></pre>";
+    '<div class="kv"><b>기기 상태(ST)</b> ' + esc(st ? "mode " + st.mode + " · mask " + (st.mask !== null ? hx2(st.mask) : "?") + " · 민감도 " + st.sens + " · 켜진 지 " + st.up + " s · 원장 " + st.led : "모름") + "</div>" +
+    "<pre id=\"cmdlog\" class=\"log\"></pre>";
   $("btnDisc").onclick = disconnect; $("cmdlog").textContent = S.log.slice(0, 30).join("\n");
 }
 function renderAll() { renderStatus(); renderEvents(); renderRecs(); renderLog(); renderSettings(); }
@@ -1024,11 +1247,13 @@ setInterval(() => { renderLog(); }, 5000);
 function openFull(id) { $(id).classList.add("open"); }
 function closeFull(id) { $(id).classList.remove("open"); }
 function tab(name) { for (const t of ["events", "recs", "log", "set"]) { $("tab-" + t).style.display = t === name ? "" : "none"; $("tb-" + t).classList.toggle("on", t === name); } if (name === "log") renderLog(); if (name === "set") renderSettings(); if (name === "recs") renderRecs(); }
-/* ---------- 내보내기(B10 · zip 저장 방식) ---------- */
+/* ---------- 내보내기(B10 · zip 저장 방식) — ★v2.1 내보낸 표시는 키를 지켜 고침 · events.txt 는 같은 줄(받은 시각 · 원문)을 한 번만 ---------- */
 async function exportToday() {
   await dbFlush(); const day = N.dayOf(now());
   const sr = (await dbAll("srec", "day", IDBKeyRange.only(day))).sort((a, b) => a.rx - b.rx || a.seq - b.seq);
-  const ln = (await dbAll("lines", "day", IDBKeyRange.only(day))).sort((a, b) => a.rx - b.rx);
+  const lnAll = (await dbAll("lines", "day", IDBKeyRange.only(day))).sort((a, b) => a.rx - b.rx || (a.id || 0) - (b.id || 0));
+  const seen = new Set(); const ln = []; let dupN = 0;
+  for (const x of lnAll) { const key = x.rx + "\t" + x.line; if (seen.has(key)) { dupN++; continue; } seen.add(key); ln.push(x); }   // 옛 판(v2)이 만든 겹친 줄은 한 번만
   const recs = (await dbAll("recs", "day", IDBKeyRange.only(day))).filter((m) => m.state === "받음");
   const files = [];
   files.push({ name: "nokk_" + day + "_records.txt", data: enc.encode(sr.map((x) => "S|" + x.seq + "|" + x.boot + "|" + x.ms + "|" + x.b64).join("\n") + (sr.length ? "\n" : "")) });   // nokk_live.html:272 과 같은 S| 줄 꼴
@@ -1041,7 +1266,7 @@ async function exportToday() {
   }
   for (const m of S.misses.filter((m) => m.day === day)) {
     const r = m.rec ? S.recs.get(m.rec) : null;
-    rows.push(N.csvRow(["놓침", N.hmsms(m.t), "", "", "", "", "", "", "", "", "", "", "", m.memo, m.sound, m.dist, m.place, m.real, r && r.state === "받음" ? r.file : (m.recState || ""), (m.hist || []).length, m.savedAt ? N.hmsms(m.savedAt) : ""]));
+    rows.push(N.csvRow(["놓침" + (m.detail === false ? "(자세히 안 고름)" : ""), N.hmsms(m.t), "", "", "", "", "", "", "", "", "", "", "", m.memo, m.sound, m.dist, m.place, m.real, r && r.state === "받음" ? r.file : (m.recState || ""), (m.hist || []).length, m.savedAt ? N.hmsms(m.savedAt) : ""]));
   }
   files.push({ name: "nokk_" + day + "_labels.csv", data: enc.encode("﻿" + rows.join("\r\n") + "\r\n") });
   for (const m of recs) {
@@ -1050,14 +1275,14 @@ async function exportToday() {
     files.push({ name: "rec_" + m.boot + "_" + m.id + ".wav", data: buf }); files.push({ name: "rec_" + m.boot + "_" + m.id + ".json", data: enc.encode(JSON.stringify(m.meta || {}, null, 1)) });
   }
   const zip = N.zipStore(files, now()); const blob = new Blob([zip], { type: "application/zip" });
-  S.exportBlob = blob; S.lastExport = { day: day, at: now(), files: files.map((f) => f.name), srec: sr.map((x) => x.k), lines: ln.length, recs: recs.map((m) => m.k) };
+  S.exportBlob = blob; S.lastExport = { day: day, at: now(), files: files.map((f) => f.name), srec: sr.map((x) => x.k), lines: ln.length, linesDup: dupN, recs: recs.map((m) => m.k) };
   metaSet("exported:" + day, { at: now(), srec: sr.length, lines: ln.length, recs: recs.length });
-  for (const x of sr) { x.exp = 1; dbPut("srec", x); } for (const x of ln) { x.exp = 1; dbPut("lines", x); } for (const m of recs) { m.exp = 1; dbPut("recs", m); S.recs.set(m.k, m); }
-  dbFlush();
+  for (const x of sr) { x.exp = 1; dbPut("srec", x); } for (const x of lnAll) { x.exp = 1; dbPut("lines", x); } for (const m of recs) { m.exp = 1; dbPut("recs", m); S.recs.set(m.k, m); }   // ★lines 는 id(키)가 붙어 있어 같은 줄을 고침
+  await dbFlush();
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "nokk_" + day + ".zip"; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
-  $("expMsg").textContent = "내보냄 " + N.hms(now()) + " · 파일 " + files.length + " · S| " + sr.length + " 줄 · 원문 " + ln.length + " 줄 · 녹음 " + recs.length;
+  $("expMsg").textContent = "내보냄 " + N.hms(now()) + " · 파일 " + files.length + " · S| " + sr.length + " 줄 · 원문 " + ln.length + " 줄" + (dupN ? "(옛 판 겹친 줄 " + dupN + " 뺌)" : "") + " · 녹음 " + recs.length;
 }
-async function deleteExported() {   // 내보낸 것만(exp = 1) — 판정 · 놓침 · 울림 목록은 남김
+async function deleteExported() {   // 내보낸 것만(exp = 1) — 판정 · 놓침 · 울림 목록은 남김 · ★lines 는 원래 줄(키)을 지움
   await dbFlush(); const all = await dbAll("srec"); const del = all.filter((x) => x.exp).map((x) => x.k); await dbDel("srec", del);
   const ln = await new Promise((res) => { const out = []; const r = DB.db.transaction(["lines"], "readonly").objectStore("lines").openCursor(); r.onsuccess = () => { const c = r.result; if (c) { if (c.value.exp) out.push(c.primaryKey); c.continue(); } else res(out); }; r.onerror = () => res(out); });
   await dbDel("lines", ln);
@@ -1067,7 +1292,9 @@ async function deleteExported() {   // 내보낸 것만(exp = 1) — 판정 · �
 /* ---------- 화면 켜 두기 ---------- */
 async function wakeOn() { if (!S.settings.wake) return; try { if ("wakeLock" in navigator && !S.wake) { S.wake = await navigator.wakeLock.request("screen"); S.wake.addEventListener("release", () => { S.wake = null; }); } } catch (e) {} }
 function wakeOff() { if (S.wake) { S.wake.release().catch(() => {}); S.wake = null; } }
-document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { if (S.wantConn && (!S.dev || !S.dev.gatt.connected)) retry(); if (S.wantConn) wakeOn(); } });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { if (S.wantConn && !(S.tx && S.dev && S.dev.gatt.connected)) retryNow(); if (S.wantConn) wakeOn(); } });
+/* ★v2.1 연결돼 있을 때 페이지를 떠나려 하면 확인 창 */
+window.addEventListener("beforeunload", (e) => { if (S.tx) { e.preventDefault(); e.returnValue = "기기와 연결돼 있습니다. 떠나면 연결이 끊깁니다."; return e.returnValue; } });
 /* ---------- 재생 ---------- */
 async function play(k) { const w = await dbGet("recwav", k); if (!w) return; const a = $("player"); a.src = URL.createObjectURL(w.wav); a.style.display = ""; a.play().catch(() => {}); }
 /* ---------- 손 · 단추 ---------- */
@@ -1076,21 +1303,27 @@ document.addEventListener("click", (e) => {
   if (t.dataset.k) { openSheet(t.dataset.k); return; }
   if (t.dataset.play) { play(t.dataset.play); return; }
   if (t.dataset.get) { const m = S.recs.get(t.dataset.get); if (m) recFetch(m); return; }
+  if (t.dataset.expl) { fetchExpl(t.dataset.expl); return; }
+  if (t.dataset.medit) { missEdit(t.dataset.medit); return; }
+  if (t.dataset.mtc) { const m = S.misses.find((x) => x.id === t.dataset.mtc); if (m) openTimeCheck(m.t, m); return; }
   if (t.dataset.main) { S.judge.main = t.dataset.main; S.judge.sub = []; renderSheet(); return; }
   if (t.dataset.sub) { const i = S.judge.sub.indexOf(t.dataset.sub); if (i >= 0) S.judge.sub.splice(i, 1); else S.judge.sub.push(t.dataset.sub); renderSheet(); return; }
-  if (t.dataset.set) { const k = t.dataset.set; S.settings[k] = !S.settings[k]; metaSet("settings", S.settings);
-    if (k === "tester" && S.tx) cmd("tester " + (S.settings.tester ? "on" : "off"), { expect: (l) => /^(OK|ERR)\|tester/.test(l), timeout: 3000 }).then(() => cmd("stat", { expect: (l) => l.startsWith("ST2|"), timeout: 3000 }));
+  if (t.dataset.mode) { S.settings.mode = t.dataset.mode === "in" ? "in" : "out"; metaSet("settings", S.settings); dbFlush(); renderSettings();
+    if (S.tx) applyMode().then(statNow); return; }                                               // ★연결 중에 바꾸면 바로 보냄 → stat 으로 mask 확인
+  if (t.dataset.set) { const k = t.dataset.set; S.settings[k] = !S.settings[k]; metaSet("settings", S.settings); dbFlush();
+    if (k === "tester" && S.tx) cmd("tester " + (S.settings.tester ? "on" : "off"), { expect: (l) => /^(OK|ERR)\|tester/.test(l), timeout: 3000 }).then(statNow);
+    if (k === "b70" && S.tx) applyB70();                                                          // ★연결 중에 끄면 0.50 · 켜면 0.70
     if (k === "wake") { if (S.settings.wake) wakeOn(); else wakeOff(); }
     renderSettings(); return; }
   const d = S.missDraft; for (const f of ["when", "sound", "dist", "place", "real"]) if (t.dataset[f] !== undefined && d) { d[f] = t.dataset[f]; renderMiss(); return; }
 });
 function wire() {
-  $("btnConn").onclick = () => { if (!(S.dev && S.wantConn)) connect(); };
+  $("btnConn").onclick = connect;
   $("btnNow").onclick = async () => { if (S.tx && !S.batch) { await liveNow(); note("지금부터 받기"); } };
-  $("btnMiss").onclick = missStart; $("missSave").onclick = missSave; $("missBack").onclick = () => closeFull("missPage");
-  $("tcBack").onclick = () => closeFull("tcPage"); $("shClose").onclick = () => { $("sheet").classList.remove("open"); S.sheetKey = null; }; $("shSave").onclick = saveJudge;
+  $("btnMiss").onclick = missStart; $("missSave").onclick = missSave; $("missBack").onclick = () => { closeFull("missPage"); renderMissList(); };
+  $("tcBack").onclick = () => closeFull("tcPage"); $("shClose").onclick = closeSheet; $("shSave").onclick = saveJudge;
   $("btnAllJ").onclick = () => { S.showAllJudged = !S.showAllJudged; renderEvents(); };
-  $("btnRec").onclick = recNow; $("btnExp").onclick = exportToday; $("btnDelExp").onclick = deleteExported;
+  $("btnRec").onclick = recNow; $("btnExp").onclick = exportToday; $("btnDelExp").onclick = deleteExported; $("btnGap").onclick = fetchGap;
   $("btnFind").onclick = () => { const t = N.parseHHMMSS($("findTime").value); if (t !== null) openTimeCheck(t); else $("findErr").textContent = "숫자 6 개(HHMMSS) 또는 HH:MM:SS"; };
   $("btnStop").onclick = () => { if (S.batch) S.batch.stop = true; };
   for (const t of ["events", "recs", "log", "set"]) $("tb-" + t).onclick = () => tab(t);
@@ -1098,13 +1331,19 @@ function wire() {
 /* ---------- 시작 ---------- */
 async function boot() {
   wire(); tab("events");
-  try { await dbOpen(); } catch (e) { note("IndexedDB 못 엶 " + e.message); renderAll(); return; }
+  const tw = setTimeout(() => { S.dbWaiting = now(); note("저장소 여는 중 — 옛 판 창이 잡고 있으면 10 초쯤 걸릴 수 있음"); renderStatus(); }, 1500);   // 옛 판이 뒤로 가기 저장(bfcache)에 남아 있으면 판 올림이 ~12 s 기다림(실험 exp_upgrade.js A)
+  try { await dbOpen(); } catch (e) { clearTimeout(tw); note("IndexedDB 못 엶 " + e.message); renderAll(); return; }
+  clearTimeout(tw); if (S.dbWaiting) { note("저장소 열림(" + ((now() - S.dbWaiting) / 1000 + 1.5).toFixed(1) + " s 기다림)"); S.dbWaiting = 0; }
   const meta = await dbAll("meta"); for (const m of meta) S.meta[m.key] = m.value; if (S.meta.settings) Object.assign(S.settings, S.meta.settings);
+  if (S.settings.mode !== "in") S.settings.mode = "out";                                         // 옛 판 설정에는 mode · b70 없음 → 실외 · 켜짐(위 기본값)
   for (const e of await dbAll("events")) S.events.set(e.k, e);
   S.misses = await dbAll("misses"); for (const r of await dbAll("recs")) S.recs.set(r.k, r);
+  { const wal = walRead(), have = new Set(S.misses.map((m) => m.id));                           // 앞서 적어 둔 놓침 중 저장소에 없는 것 되살림
+    for (const m of wal) { if (have.has(m.id)) { walDel(m.id); continue; } S.misses.push(m); if (await missPut(m)) note("놓침 신고 되살림 " + N.hms(m.press)); } }
   for (const c of await dbAll("clock")) S.clock.set(c.boot, c);
   S.gaps = await dbAll("gaps"); S.marks = await dbAll("marks");
   S.ranges = (S.meta["ranges:" + N.dayOf(now())] || []).slice();
+  if (S.dbMig) note("DB 판 올림 " + S.dbMig.from + " → " + S.dbMig.to + " · 줄 " + S.dbMig.lines + " 옮김");
   renderAll();
 }
 window.addEventListener("load", boot);
