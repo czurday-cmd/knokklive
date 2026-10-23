@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1E56B8">
-<title>NOKK 시험 v2.1</title>
-<!-- R84-6 · B30(v4.7.8-r79v3b) 시험 페이지 v2.1 · 한 파일 · 바깥 라이브러리 · 글꼴 없음 · 원래 nokk_live.html 은 그대로 -->
+<title>NOKK 시험 v2.2</title>
+<!-- R93 · v4.7.12-r93 시험 페이지 v2.2(R84-6 v2.1 + AI 상태 표시) · 한 파일 · 바깥 라이브러리 · 글꼴 없음 · 원래 nokk_live.html 은 그대로 · 옛 판 보관 = nokk_live_v21.html -->
 <style>
-  :root{--blue:#1E56B8;--orange:#B4470F;--black:#1A1C1E;--gray:#6B7280;--line:#D0D4DA;--bg:#F2F3F5;--card:#FFFFFF;--text:#1A1C1E;--dim:#5B6270;--purple:#6B21A8}
+  :root{--blue:#1E56B8;--orange:#B4470F;--black:#1A1C1E;--gray:#6B7280;--line:#D0D4DA;--bg:#F2F3F5;--card:#FFFFFF;--text:#1A1C1E;--dim:#5B6270;--purple:#6B21A8;--red:#B91C1C}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;overscroll-behavior-y:none}
   body{padding-bottom:76px}
@@ -23,6 +23,10 @@
   .pon{border-color:var(--blue);color:var(--blue);font-weight:700}
   .poff{border-color:var(--gray);color:var(--gray)}
   .pwait,.pwarn{border-color:var(--orange);color:var(--orange);font-weight:700}
+  .pbad{border-color:var(--red);background:var(--red);color:#fff;font-weight:700}
+  .aibar{margin-top:6px;background:var(--red);color:#fff;border-radius:10px;padding:8px 10px;font-size:14px;font-weight:700;line-height:1.45}
+  .ainote{margin-top:6px;border:1.5px solid var(--orange);color:var(--orange);border-radius:10px;padding:6px 8px;font-size:13px;display:flex;gap:8px;align-items:center;justify-content:space-between}
+  .ainote button{min-height:36px;padding:4px 10px;font-size:13px}
   .small{font-size:13px;color:var(--dim)}
   #btnConn{min-height:36px;padding:4px 12px;font-size:14px}
   #btnNow,#btnStop{min-height:36px;padding:4px 10px;font-size:13px}
@@ -94,9 +98,11 @@
 </head>
 <body>
 <header id="bar">
-  <div class="row"><button id="btnConn">연결</button><span id="stConn" class="pill poff">끊김</span><span id="stMode" class="pill">모드 ?</span><span id="stMic" class="pill">마이크 ?</span><span id="stBoot" class="pill">boot ?</span>
+  <div class="row"><button id="btnConn">연결</button><span id="stConn" class="pill poff">끊김</span><span id="stMode" class="pill">모드 ?</span><span id="stMic" class="pill">마이크 ?</span><span id="stAI" class="pill">AI ?</span><span id="stBoot" class="pill">boot ?</span>
     <button id="btnNow" class="sec" style="display:none">지금부터 받기</button><button id="btnStop" style="display:none">그만 받기</button></div>
   <div class="row" style="margin-top:4px"><span id="stLive" class="pill">—</span><span id="stData" class="small">자료 없음</span><span id="stRange" class="small"></span></div>
+  <div id="aiBar" class="aibar" role="alert" style="display:none"></div>
+  <div id="aiNote" class="ainote" style="display:none"><span id="aiNoteTxt"></span><button id="aiNoteX">닫기</button></div>
 </header>
 <main>
   <section id="tab-events">
@@ -172,7 +178,14 @@
 (function (G) {
 "use strict";
 const C = {};
-C.PAGE_VER = "v2.1 · 2026-10-20";
+C.PAGE_VER = "v2.2 · 2026-10-24";
+/* ★v2.2(R93) AI 상태 — ST3(.ino appStat · ST 와 ST2 사이) · AI|stop/ok/restart/warn(.ino r93 이음 · ai_r93.h fmt*) · 옛 펌웨어(ST3 없음) = 'AI ?' */
+C.AI = { STALE_MS: 11 * 60000, WARN_MS: 10 * 60000,
+  BANNER: "AI 판단 멈춤 — 경적 · 경보음 감지 안 됨 · 이 동안 큰소리 알림이 경적 소리에도 울릴 수 있음 · 화재 · 민방위 판단은 계속 · 1 분 넘으면 기기가 다시 켜짐(6 시간에 2 번까지)",
+  USED_UP: "다시 켜기를 다 씀 — 손으로 껐다 켜기",
+  RESTART: "기기가 AI 멈춤으로 다시 켜짐(n 번째) — 저장 안 한 모드 · 설정이 기본값으로 · 기기 안 9 시간 기록이 지워짐(이 폰이 받은 것은 남음)",
+  SG_B70: "모양 모듈이 켜져 있으면 쓰이지 않음",
+  WHY: { psram: "바깥 메모리 부족", heap: "내부 메모리 부족", mem: "메모리 원인 모름", other: "그 밖" } };
 C.UUID = { SVC: "6e400001-b5a3-f393-e0a9-e50e24dcca9e", TX: "6e400003-b5a3-f393-e0a9-e50e24dcca9e", RX: "6e400002-b5a3-f393-e0a9-e50e24dcca9e", AUD: "6e400004-b5a3-f393-e0a9-e50e24dcca9e" };
 C.REC = { HDR: 2656, PCM: 320000, TOTAL: 322660, SR: 16000, TAG: 0x52 };          // rec10.h:19-28 · rec10.cpp:270
 C.LSEQ_NOW = 4294967295;                                                         // lseq 4294967295 = 지금부터(ble_link.cpp:378-384 · 커서 0 넘침)
@@ -267,6 +280,46 @@ function parseST2(line) {  // ST2|svc=|left=|ota=|time=|hpf=|tz=|al=|tm=|ntf=|xt
   const o = kv(line.split("|").slice(1));
   return { svc: num(o.svc), ota: o.ota, time: o.time, hpf: num(o.hpf), tz: num(o.tz), tester: num(o.tester), rec: num(o.rec), ntf: o.ntf };
 }
+function parseST3(line) {  // ★v2.2 ST3|ai=ok|stop|inf=|aif=|aim=|aic=0~4|sg=on|calc|rest|off|none|rel|airst=|psmax=KB — r93 .ino appStat(ST → ST3 → ST2) · ai_r93.h fmtST3
+  if (!line.startsWith("ST3|")) return null;
+  const o = kv(line.split("|").slice(1));
+  return { ai: o.ai || null, inf: num(o.inf), aif: num(o.aif), aim: num(o.aim), aic: num(o.aic), sg: o.sg || null, airst: num(o.airst), psmax: num(o.psmax) };
+}
+function parseAI(line) {   // ★v2.2 AI|stop|why=|code=|psmax=|ps=|heap=|hmax=|sg=|up= · AI|ok|after=|sg=|up= · AI|restart|why=|n=|up= · AI|warn|aim=|aif=|up= — ai_r93.h fmtStop/fmtOk/fmtRestart/fmtWarn
+  if (!line.startsWith("AI|")) return null;
+  const p = line.split("|"); const t = p[1] || ""; const o = kv(p.slice(2));
+  if (["stop", "ok", "restart", "warn"].indexOf(t) < 0) return { type: "other", raw: line };
+  return { type: t, why: o.why || null, code: num(o.code), psmax: num(o.psmax), ps: num(o.ps), heap: num(o.heap), hmax: num(o.hmax), sg: o.sg || null, up: num(o.up),
+           after: num(o.after), n: num(o.n), aim: num(o.aim), aif: num(o.aif) };
+}
+/* ★v2.2 AI 표시 셈(화면 없음 · 시험 test_core.js 가 직접 부름) — a = { st3, st3At, last(마지막 AI| 해석), lastAt, warnAt, statSeenAt(ST2 받은 때), ver } · t = 지금 ms
+ *   돌려줌 { label: 'AI ?'|'AI 정상'|'AI 불안정'|'AI 멈춤', cls: ''|'pon'|'pwarn'|'pbad', stopped, banner(글 또는 ''), usedUp, why, src }
+ *   · 최근 근거(ST3 · AI| 가운데 늦게 받은 것)로 정상 · 멈춤 · 11 분 넘게 못 받으면 'AI ?' · ST2 는 받았는데 ST3 가 한 번도 없으면 옛 펌웨어 = 'AI ?'
+ *   · 불안정 = 정상인데 마지막 AI|warn 또는 ST3 aim > 0 뒤 10 분 안 */
+function aiView(a, t) {
+  a = a || {}; const st3 = a.st3, ST = C.AI.STALE_MS;
+  const r = { label: "AI ?", cls: "", stopped: false, banner: "", usedUp: false, why: null, src: "none" };
+  const sAt = st3 ? (a.st3At || 0) : -1, lAt = a.last ? (a.lastAt || 0) : -1;
+  if (sAt < 0 && lAt < 0) { r.src = a.statSeenAt ? "old-fw" : "none"; return r; }
+  const useSt3 = sAt >= lAt; const at = useSt3 ? sAt : lAt;
+  if (t - at > ST) { r.src = "stale"; return r; }
+  let stopped;
+  if (useSt3) { stopped = st3.ai === "stop"; r.src = "ST3"; }
+  else { const L = a.last; r.src = "AI|" + L.type; stopped = L.type === "stop" ? true : (L.type === "ok" || L.type === "warn") ? false : (st3 && sAt >= 0 && t - sAt <= ST ? st3.ai === "stop" : null);
+    if (stopped === null) { r.src = "AI|restart"; return r; } }
+  const airst = st3 && st3.airst !== null && st3.airst !== undefined ? st3.airst : (a.last && a.last.type === "restart" ? a.last.n : null);
+  if (stopped) {
+    r.label = "AI 멈춤"; r.cls = "pbad"; r.stopped = true; r.banner = C.AI.BANNER;
+    const fromAic = st3 && st3.aic ? (C.AI.WHY[["", "psram", "heap", "mem", "other"][st3.aic]] || null) : null;   // 늦게 받은 쪽의 까닭(ST3 aic · AI|stop why)
+    r.why = (!useSt3 && a.last && a.last.type === "stop") ? (C.AI.WHY[a.last.why] || a.last.why) : fromAic;
+    if (airst !== null && airst >= 2) { r.usedUp = true; r.banner += " · " + C.AI.USED_UP; }
+    return r;
+  }
+  const warnRecent = (a.warnAt && t - a.warnAt <= C.AI.WARN_MS) || (st3 && sAt >= 0 && st3.aim > 0 && t - sAt <= C.AI.WARN_MS);
+  if (warnRecent) { r.label = "AI 불안정"; r.cls = "pwarn"; } else { r.label = "AI 정상"; r.cls = "pon"; }
+  return r;
+}
+function restartNote(n) { return C.AI.RESTART.replace("n 번째", (n === null || n === undefined ? "?" : n) + " 번째"); }
 function parseVER(line) {  // VER|<FW>|<날짜>|labels=…|proto= — .ino:2221
   if (!line.startsWith("VER|")) return null;
   const p = line.split("|"); const o = kv(p.slice(3));
@@ -476,6 +529,7 @@ function zipStore(files, when) {   // files = [{name, data:Uint8Array}]
 function csvCell(v) { if (v === null || v === undefined) return ""; const s = String(v); return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
 function csvRow(a) { return a.map(csvCell).join(","); }
 G.NOKK = { C: C, b64ToBytes: b64ToBytes, bytesToB64: bytesToB64, crc32: crc32, hex8: hex8, parse41: parse41, parseS: parseS, parseEV: parseEV, parseST: parseST, parseST2: parseST2,
+  parseST3: parseST3, parseAI: parseAI, aiView: aiView, restartNote: restartNote,
   parseVER: parseVER, parseSTAT: parseSTAT, parseLSTAT: parseLSTAT, parseFL: parseFL, parseREC: parseREC, parseReply: parseReply, parseEVBEGIN: parseEVBEGIN, parseEVEND: parseEVEND,
   parseLedger: parseLedger, kindFromTag: kindFromTag, hms: hms, hmsms: hmsms, dayOf: dayOf, parseHHMMSS: parseHHMMSS, clockFromStat: clockFromStat, clockRefine: clockRefine,
   Lof: Lof, aggCount: aggCount, bypassAt: bypassAt, reasonSummary: reasonSummary, whyNot: whyNot, median: median, Assembler: Assembler, parseRecHeader: parseRecHeader,
@@ -483,7 +537,7 @@ G.NOKK = { C: C, b64ToBytes: b64ToBytes, bytesToB64: bytesToB64, crc32: crc32, h
 })(typeof window !== "undefined" ? window : globalThis);
 </script>
 <script id="nokk-app">
-/* ===== NOKK 시험 페이지 v2.1 — 앱(연결 · 저장 · 화면) · R84-6(10/20 출근길 문제 고침 + 모드 · B70) ===== */
+/* ===== NOKK 시험 페이지 v2.2 — 앱(연결 · 저장 · 화면) · R84-6(10/20 출근길 문제 고침 + 모드 · B70) · ★R93(10/24) AI 상태 표시(ST3 · AI| · 경고 띠 · 다시 켜짐 알림 · B70 옆 모양 모듈 한 줄) — 저장 · 연결 차례 · 보내는 명령은 v2.1 그대로 ===== */
 (function () {
 "use strict";
 const N = window.NOKK, C = N.C, T = C.TH;
@@ -503,6 +557,8 @@ const S = {
   q: [], qBusy: false, cur: null, oneshots: [], batch: null, evOpen: null, rec: null, recParts: {}, recLastSum: null, wake: null,
   pausedWhy: "", exportBlob: null, lastExport: null, sheetKey: null, judge: null, missDraft: null, tcheckT: null, log: [],
   modeChk: null, b70Chk: null, dbMig: null, evWaitMs: 180000,   // evWaitMs = go ev 끝 줄 기다림(시험만 줄여 씀)
+  st3: null, st3At: 0,                                           // ★v2.2 ST3(stat 의 ST 와 ST2 사이 · 옛 펌웨어 = 없음)
+  ai: { last: null, lastAt: 0, warnAt: 0, statSeenAt: 0, notice: null, noticeAt: 0, prevRst: null, wasStop: false, vibN: 0 },   // ★v2.2 AI 상태(메모리만 · 저장소 안 바꿈)
 };
 window.NOKK_APP = S;           // 시험 · 점검용(페이지 동작에는 안 씀)
 /* ---------- IndexedDB(받는 즉시 1 s 묶음 쓰기 · 페이지를 닫아도 남음) ---------- */
@@ -692,7 +748,9 @@ function onLine(line, rx) {
     logLine(line.split("|")[0], line, rx);
     if (line.startsWith("EV|")) onEV(line, rx);
     else if (line.startsWith("REC|")) onREC(line, rx);
-    else if (line.startsWith("ST2|")) { S.st2 = N.parseST2(line); S.testerKnown = { v: S.st2.tester, src: "ST2", at: rx }; renderSettings(); }
+    else if (line.startsWith("ST2|")) { S.st2 = N.parseST2(line); S.testerKnown = { v: S.st2.tester, src: "ST2", at: rx }; S.ai.statSeenAt = rx; renderSettings(); aiRender(); }
+    else if (line.startsWith("ST3|")) { S.st3 = N.parseST3(line); S.st3At = rx; aiOnST3(rx); renderSettings(); }   // ★v2.2 — ST 와 ST2 사이(stat 끝 = ST2 그대로)
+    else if (line.startsWith("AI|")) aiOnLine(N.parseAI(line), rx);                                                  // ★v2.2 — 상태 바뀜 · 되풀이(멈춤 60 s · 정상 5 분)
     else if (line.startsWith("ST|")) { S.stat = N.parseST(line); S.statAt = rx; S.statFresh = true; checkMode(); renderSettings(); }
     else if (line.startsWith("VER|")) { S.ver = N.parseVER(line); renderSettings(); }
     else if (line.startsWith("STAT|")) { S.statMsg = N.parseSTAT(line); }
@@ -1173,6 +1231,34 @@ function renderStatus() {
   $("btnStop").style.display = S.batch ? "" : "none";
   $("stBoot").textContent = S.boot !== null ? "boot " + S.boot + (S.meta.rebootAt ? " · 재부팅 " + N.hms(S.meta.rebootAt) : "") : "boot ?";
   const bg = $("btnGap"); if (bg) bg.disabled = !S.tx || !!S.batch;
+  aiRender();
+}
+/* ---------- ★v2.2 AI 상태(마이크 옆 · 경고 띠 · 다시 켜짐 알림) — 페이지는 새 명령을 보내지 않음(기기가 되풀이해 보냄) ---------- */
+function aiNotice(text, rx) { S.ai.notice = text; S.ai.noticeAt = rx || now(); note(text); }
+function aiOnST3(rx) {
+  const st3 = S.st3; if (!st3) return;
+  if (st3.airst !== null && S.ai.prevRst !== null && st3.airst > S.ai.prevRst) aiNotice(N.restartNote(st3.airst), rx);   // airst 가 늘면 = AI 멈춤으로 다시 켜짐(그 줄을 놓쳤어도)
+  if (st3.airst !== null) S.ai.prevRst = st3.airst;
+  aiRender();
+}
+function aiOnLine(p, rx) {
+  if (!p || p.type === "other") return;
+  S.ai.last = p; S.ai.lastAt = rx;
+  if (p.type === "warn") S.ai.warnAt = rx;
+  if (p.type === "restart") { aiNotice(N.restartNote(p.n), rx); if (p.n !== null) S.ai.prevRst = p.n; }
+  aiRender();
+}
+function aiRender() {
+  const el = $("stAI"); if (!el) return;
+  const v = N.aiView({ st3: S.st3, st3At: S.st3At, last: S.ai.last, lastAt: S.ai.lastAt, warnAt: S.ai.warnAt, statSeenAt: S.ai.statSeenAt }, now());
+  el.textContent = v.label; el.className = "pill " + v.cls;
+  const bar = $("aiBar");
+  if (v.stopped) { bar.textContent = v.banner + (v.why ? " · 까닭 " + v.why : ""); bar.style.display = ""; }
+  else { bar.textContent = ""; bar.style.display = "none"; }
+  if (v.stopped && !S.ai.wasStop && navigator.vibrate) { try { navigator.vibrate([400, 200, 400]); S.ai.vibN++; } catch (e) {} }   // 폰이 지원하면 멈춤으로 바뀔 때 한 번
+  S.ai.wasStop = v.stopped; S.ai.view = v;
+  const nt = $("aiNote");
+  if (S.ai.notice) { $("aiNoteTxt").textContent = S.ai.notice; nt.style.display = ""; } else nt.style.display = "none";
 }
 function renderLive() {
   const r = S.latest; if (!r) return;
@@ -1230,6 +1316,7 @@ function renderSettings() {
     '<div class="kv">' + modeLine + "</div>" +
     "<h3>경보음 엄격(B70)</h3>" + tg("b70", "경보음 엄격(B70 · 오래 듣기 문턱 0.70)") +
     '<div class="small">켜짐 = 연결할 때마다 set alaggt 0.70 · 꺼짐 = 0.50(기기 기본) · 휘발(재부팅하면 0.50)</div>' +
+    (S.st3 && S.st3.sg === "on" ? '<div class="note" id="sgB70">' + esc(C.AI.SG_B70) + "</div>" : "") +   // ★v2.2 G2 — ST3 sg=on 이면(rel · off · none 이면 B70 이 쓰임)
     '<div class="kv">' + b70Line + "</div>" +
     "<h3>그 밖</h3>" +
     tg("tester", "시험자 모드(기기에 저장 · tester on/off)") + '<div class="small">기기 상태(ST2): ' + (st2 ? (st2.tester ? "시험자 모드 켜짐" : "꺼짐") + " · 녹음 칸 " + st2.rec + "/2" : "모름") + "</div>" +
@@ -1326,6 +1413,7 @@ function wire() {
   $("btnRec").onclick = recNow; $("btnExp").onclick = exportToday; $("btnDelExp").onclick = deleteExported; $("btnGap").onclick = fetchGap;
   $("btnFind").onclick = () => { const t = N.parseHHMMSS($("findTime").value); if (t !== null) openTimeCheck(t); else $("findErr").textContent = "숫자 6 개(HHMMSS) 또는 HH:MM:SS"; };
   $("btnStop").onclick = () => { if (S.batch) S.batch.stop = true; };
+  $("aiNoteX").onclick = () => { S.ai.notice = null; aiRender(); };                              // ★v2.2 다시 켜짐 알림 닫기
   for (const t of ["events", "recs", "log", "set"]) $("tb-" + t).onclick = () => tab(t);
 }
 /* ---------- 시작 ---------- */
